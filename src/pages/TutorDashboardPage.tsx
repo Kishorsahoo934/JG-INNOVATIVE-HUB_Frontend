@@ -171,7 +171,7 @@ const TutorDashboardPage = () => {
                   ) : (
                     <div className="space-y-3">
                       {bookedSessions.map((session) => {
-                        const student = session.bookedBy as any;
+                        const student = session.bookedBy as unknown as { name?: string; email?: string };
                         return (
                           <div key={session._id} className="p-4 border border-border/50 rounded-xl bg-background/20 space-y-3">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border/30 pb-2">

@@ -407,7 +407,7 @@ const toFrontendOrder = (o: Record<string, unknown>): Order => ({
     };
   })(),
   totalAmount: Number(o.totalAmount ?? (o.pricing as { totalAmount?: number })?.totalAmount) || 0,
-  deliveryCharge: Number(o.delivery_charge ?? (o.pricing as { deliveryCharge?: number })?.deliveryCharge) ?? 0,
+  deliveryCharge: Number(o.delivery_charge ?? (o.pricing as { deliveryCharge?: number })?.deliveryCharge) || 0,
   paymentStatus: paymentStatusMap[(o.paymentStatus as string) || ''] || 'Pending',
   orderStatus: orderStatusMap[(o.orderStatus as string) || ''] || 'Placed',
   paymentMethod: (o.paymentMethod as string) || '',
@@ -810,7 +810,10 @@ export const sessionsApi = {
     return fetchWithAuth<SessionSlot[]>('/api/sessions/student');
   },
   bookSlot: async (id: string) => {
-    return fetchWithAuth<{
+    return fetchWithAuth<unknown>(`/api/sessions/slots/${id}/book`, {
+      method: 'POST',
+    }) as unknown as Promise<{
+      success: boolean;
       booked: boolean;
       data: {
         orderId?: string;
@@ -820,9 +823,7 @@ export const sessionsApi = {
         cost?: number;
         _id?: string;
       };
-    }>(`/api/sessions/slots/${id}/book`, {
-      method: 'POST',
-    });
+    }>;
   },
   verifyBooking: async (id: string, data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
     return fetchWithAuth<SessionSlot>(`/api/sessions/slots/${id}/verify-booking`, {
@@ -1087,6 +1088,7 @@ export interface Product {
   category: string;
   subcategory: string;
   images: string[];
+  videos?: string[];
   cloudinaryUrl: string;
   stock: number;
   sku: string;

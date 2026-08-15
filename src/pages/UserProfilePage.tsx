@@ -38,7 +38,7 @@ const UserProfilePage: React.FC = () => {
     profileImage: ''
   });
 
-  const isSelf = currentUser && (currentUser._id === userId || currentUser.id === userId);
+  const isSelf = currentUser?._id === userId;
 
   useEffect(() => {
     if (userId) {
@@ -73,8 +73,8 @@ const UserProfilePage: React.FC = () => {
         navigate('/');
         return;
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to load profile');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error && err.message ? err.message : 'Failed to load profile');
       navigate('/');
     } finally {
       setIsLoading(false);
@@ -96,8 +96,8 @@ const UserProfilePage: React.FC = () => {
         setEditForm(prev => ({ ...prev, profileImage: res.data.url }));
         toast.success('Avatar uploaded successfully!');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Avatar upload failed');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error && err.message ? err.message : 'Avatar upload failed');
     } finally {
       setUploadingAvatar(false);
     }
@@ -138,8 +138,8 @@ const UserProfilePage: React.FC = () => {
         fetchProfileData();
         await refreshUser();
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update profile');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error && err.message ? err.message : 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }

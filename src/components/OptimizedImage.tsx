@@ -1,6 +1,6 @@
 import type { ImgHTMLAttributes } from 'react';
 
-export interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'loading' | 'decoding'> {
+export interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'loading'> {
   /** Image URL (required) */
   src: string;
   /** Alt text for accessibility */

@@ -176,10 +176,10 @@ const ProjectsConsultancyPage = () => {
                     loading="lazy"
                   />
                   <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
-                    <Badge className="bg-primary/95 text-white border-none text-[9px] uppercase tracking-wider font-semibold">
+                    <Badge className="bg-primary/95 text-black border-none text-[9px] uppercase tracking-wider font-semibold">
                       {project.projectType === 'combo_components' ? 'Kit Combo' : 'Ready Made'}
                     </Badge>
-                    <Badge variant="secondary" className="bg-secondary/95 text-white border-border/50 text-[9px] capitalize">
+                    <Badge variant="secondary" className="bg-secondary/95 text-black border-border/50 text-[9px] capitalize">
                       {project.difficulty}
                     </Badge>
                   </div>
@@ -200,7 +200,7 @@ const ProjectsConsultancyPage = () => {
                   {project.components && project.components.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-2">
                       {project.components.slice(0, 3).map((comp) => (
-                        <Badge key={comp} variant="outline" className="text-[10px] py-0 px-2 font-medium bg-secondary/30 border-border/60 text-white">
+                        <Badge key={comp} variant="outline" className="text-[10px] py-0 px-2 font-medium bg-secondary/30 border-border/60 text-black">
                           {comp}
                         </Badge>
                       ))}

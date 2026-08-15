@@ -78,7 +78,7 @@ const OrderDetailPage = () => {
   const canHaveInvoice =
     accessMode === 'owner' &&
     order &&
-    (order.paymentStatus === 'paid' ||
+    ((order.paymentStatus as string) === 'paid' ||
       order.paymentStatus === 'Paid' ||
       ['confirmed', 'processing', 'shipped', 'delivered', 'Packed', 'Shipped', 'Delivered'].includes(order.orderStatus));
   const hasInvoice = Boolean(order?.invoiceUrl);

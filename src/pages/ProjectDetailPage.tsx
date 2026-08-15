@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Minus, Plus, ShoppingCart, Heart, Share2, Play, BookOpen, Clock, Settings, Layers, ListChecks } from 'lucide-react';
 import SEO from '@/components/SEO';
 import { projectsApi, reviewsApi } from '../services/api';
-import type { Project } from '../services/api';
+import type { Product, Project } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Button } from '@/components/ui/button';
@@ -110,7 +110,7 @@ const ProjectDetailPage = () => {
       category: 'project-kits',
       subcategory: project.projectType,
       cloudinaryUrl: project.images[0] || ''
-    } as any;
+    } as Product;
 
     addToCart(prodAdapter, quantity);
     toast({
@@ -126,7 +126,7 @@ const ProjectDetailPage = () => {
       category: 'project-kits',
       subcategory: project.projectType,
       cloudinaryUrl: project.images[0] || ''
-    } as any;
+    } as Product;
 
     sessionStorage.setItem('buyNowItem', JSON.stringify({ product: prodAdapter, quantity }));
     navigate('/checkout');
@@ -139,7 +139,7 @@ const ProjectDetailPage = () => {
       category: 'project-kits',
       subcategory: project.projectType,
       cloudinaryUrl: project.images[0] || ''
-    } as any;
+    } as Product;
 
     if (isInWishlist(project._id)) {
       removeFromWishlist(project._id);

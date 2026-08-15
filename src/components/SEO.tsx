@@ -12,7 +12,7 @@ import {
 const INDEX_ROBOTS =
   'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
-interface SEOProps extends SEOOptions {}
+type SEOProps = SEOOptions;
 
 /**
  * Route-level SEO: title, meta, Open Graph, Twitter, canonical.
@@ -66,7 +66,6 @@ export default function SEO(props: SEOProps) {
 
       {jsonLd?.map((raw, i) => (
         <script
-          // eslint-disable-next-line react/no-danger
           key={`jsonld-${i}`}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: raw }}

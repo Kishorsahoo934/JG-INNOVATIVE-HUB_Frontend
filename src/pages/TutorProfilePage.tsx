@@ -98,7 +98,7 @@ const TutorProfilePage = () => {
         order_id: res.data.orderId,
         name: 'Innovative Hub',
         description: `1-on-1 Robotics Session: ${slot.topic}`,
-        handler: async (response: any) => {
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
           try {
             const verifyRes = await sessionsApi.verifyBooking(slot._id, {
               razorpay_order_id: response.razorpay_order_id,
@@ -129,7 +129,7 @@ const TutorProfilePage = () => {
         }
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const rzp = new (window as unknown as { Razorpay: new (o: typeof options) => { open: () => void } }).Razorpay(options);
       rzp.open();
     } catch (err) {
       toast({

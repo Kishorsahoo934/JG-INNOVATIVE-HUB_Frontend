@@ -90,10 +90,10 @@ const WorkshopDetailPage = () => {
           window.open(workshop.googleFormLink, '_blank');
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: 'Enrollment Failed',
-        description: err.message || 'Something went wrong',
+        description: err instanceof Error && err.message ? err.message : 'Something went wrong',
         variant: 'destructive',
       });
     } finally {

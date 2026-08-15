@@ -120,7 +120,7 @@ const InternshipsPage = () => {
 
   const loadRazorpay = () =>
     new Promise<void>((resolve, reject) => {
-      if ((window as any).Razorpay) return resolve();
+      if ((window as unknown as { Razorpay?: unknown }).Razorpay) return resolve();
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve();
@@ -247,10 +247,10 @@ const InternshipsPage = () => {
                 await fetchMyApplications();
                 setActiveTab('my-applications');
               }
-            } catch (err: any) {
+            } catch (err: unknown) {
               toast({
                 title: 'Verification Failed',
-                description: err.message || 'Verification of application failed. Contact support with payment ID.',
+                description: err instanceof Error && err.message ? err.message : 'Verification of application failed. Contact support with payment ID.',
                 variant: 'destructive'
               });
             } finally {
@@ -269,12 +269,12 @@ const InternshipsPage = () => {
           }
         };
 
-        const rzp = new ((window as any).Razorpay)(options);
+        const rzp = new ((window as unknown as { Razorpay: new (o: typeof options) => { open: () => void } }).Razorpay)(options);
         rzp.open();
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast({
           title: 'Payment Order Failed',
-          description: err.message || 'Could not initiate payment order. Please try again.',
+          description: err instanceof Error && err.message ? err.message : 'Could not initiate payment order. Please try again.',
           variant: 'destructive'
         });
         setIsSubmitting(false);
@@ -317,10 +317,10 @@ const InternshipsPage = () => {
           await fetchMyApplications();
           setActiveTab('my-applications');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast({
           title: 'Application Failed',
-          description: err.message || 'Something went wrong during submission.',
+          description: err instanceof Error && err.message ? err.message : 'Something went wrong during submission.',
           variant: 'destructive'
         });
       } finally {
@@ -357,7 +357,7 @@ const InternshipsPage = () => {
           
           {/* Main Tabs switcher */}
           <div className="flex justify-center mb-8">
-            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full max-w-xs">
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'details' | 'my-applications')} className="w-full max-w-xs">
               <TabsList className="bg-[#0c121e] border border-border/60 p-1 w-full grid grid-cols-2">
                 <TabsTrigger value="details" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold text-xs py-2">
                   Internships
@@ -505,7 +505,7 @@ const InternshipsPage = () => {
 
                       <div className="mt-6">
                         <Button
-                          onClick={() => handleApplyClick('self-funded', tier.id as any)}
+                          onClick={() => handleApplyClick('self-funded', tier.id as '1-month' | '45-days' | '2-month')}
                           variant="outline"
                           className="w-full text-xs font-bold py-4 border-blue-500/30 hover:bg-blue-500 hover:text-black hover:border-blue-500 transition-colors shadow-sm"
                         >

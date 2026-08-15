@@ -1048,7 +1048,7 @@ const AccountPage = () => {
                             <p className="text-xs text-muted-foreground">Time Slot: {session.time}</p>
                             {session.tutorId && typeof session.tutorId === 'object' && (
                               <p className="text-xs text-muted-foreground">
-                                Tutor: <span className="font-semibold text-foreground">{(session.tutorId as any).name}</span>
+                                Tutor: <span className="font-semibold text-foreground">{session.tutorId.name}</span>
                               </p>
                             )}
                           </div>

@@ -13,6 +13,7 @@ const offerings = [
     description: 'Explore a vast catalog of high-quality electrical and electronic components for your projects.',
     path: '/eshop',
     hoverColor: 'hover:border-green-500',
+    isExternal: false,
   },
   {
     icon: Settings,
@@ -20,6 +21,7 @@ const offerings = [
     description: 'Get everything you need in one kit. ',
     path: '/project-kits',
     hoverColor: 'hover:border-primary',
+    isExternal: false,
   },
   {
     icon: Cpu,
@@ -27,6 +29,7 @@ const offerings = [
     description: 'Bespoke design, rapid prototyping, PCB routing, 3D printing and industrial manufacturing for custom engineering products.',
     path: '/product-development',
     hoverColor: 'hover:border-blue-500',
+    isExternal: false,
   },
 ];
 
@@ -98,16 +101,6 @@ const HomePage = () => {
           <div className="absolute inset-0 bg-black/65" />
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center pt-24 pb-6 md:pt-32 md:pb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 animate-fade-in italic">
-            JG Innovative Hub Pvt. Ltd.
-          </h1>
-          <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto mb-0 animate-fade-in px-4" style={{ animationDelay: '0.2s' }}>
-            Your all-in-one innovation platform for robotics, IoT, and embedded systems. We provide the tools, knowledge, and community to transform your ideas into real-world solutions.
-          </p>
-        </div>
-
         {/* Scrolling Marquee Hiring Line */}
         <div className="relative z-10 w-full bg-primary/10 border-y border-primary/20 py-3 overflow-hidden my-6 backdrop-blur-sm">
           <style>{`
@@ -130,6 +123,16 @@ const HomePage = () => {
               <span>We are hiring interns! Apply as soon as possible • Paid and self-funded positions open • Dive into Robotics, PCB design & IoT •</span>
             </div>
           </div>
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 container mx-auto px-4 text-center pt-24 pb-6 md:pt-32 md:pb-8">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 animate-fade-in italic">
+            JG Innovative Hub Pvt. Ltd.
+          </h1>
+          <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto mb-0 animate-fade-in px-4" style={{ animationDelay: '0.2s' }}>
+            Your all-in-one innovation platform for robotics, IoT, and embedded systems. We provide the tools, knowledge, and community to transform your ideas into real-world solutions.
+          </p>
         </div>
 
         {/* Core Offerings - within the same video background */}
