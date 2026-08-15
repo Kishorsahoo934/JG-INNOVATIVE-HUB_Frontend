@@ -1,0 +1,282 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Innovative Hub Design System - Professional Blue Theme */
+
+@layer base {
+  :root {
+    /* Light professional theme */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 20%;
+
+    /* Professional Blue accent */
+    --primary: 205 85% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 15% 94%;
+    --secondary-foreground: 215 25% 25%;
+
+    --muted: 210 15% 92%;
+    --muted-foreground: 215 15% 45%;
+
+    --accent: 205 85% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 205 85% 45%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors for the tech theme */
+    --tech-cyan: 205 85% 45%;
+    --tech-glow: 205 75% 55%;
+    --footer-bg: 220 20% 14%;
+    --footer-text: 210 20% 80%;
+    --footer-muted: 210 15% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(205 85% 45%), hsl(205 75% 40%));
+    --gradient-glow: radial-gradient(circle, hsl(205 85% 45% / 0.15), transparent 70%);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 20%;
+    --sidebar-primary: 205 85% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 15% 94%;
+    --sidebar-accent-foreground: 215 25% 25%;
+    --sidebar-border: 210 15% 88%;
+    --sidebar-ring: 205 85% 45%;
+  }
+
+  .dark {
+    --background: 220 20% 10%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 18% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 205 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 18% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 15% 22%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 205 85% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 205 85% 50%;
+    
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 205 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 18% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 15% 25%;
+    --sidebar-ring: 205 85% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100dvh;
+    height: auto;
+    /* Safe area for notched devices */
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+
+  #root {
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  /* Prevent iOS zoom on focus when input font-size is under 16px */
+  @media (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+}
+
+/* Custom animations */
+@layer utilities {
+  .animate-logo-pulse {
+    animation: logoPulse 2s ease-in-out infinite;
+  }
+
+  .animate-logo-glow {
+    animation: logoGlow 2s ease-in-out infinite;
+  }
+
+  .animate-fade-scale-in {
+    animation: fadeScaleIn 0.8s ease-out forwards;
+  }
+
+  .animate-network-float {
+    animation: networkFloat 20s ease-in-out infinite;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInFromLeft 0.3s ease-out forwards;
+  }
+
+  .card-hover-effect {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-hover-effect:hover {
+    @apply -translate-y-1 shadow-lg;
+    box-shadow: 0 10px 40px -10px hsl(var(--tech-cyan) / 0.2);
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* Composited only: opacity (avoid animating filter/box-shadow for better perf) */
+@keyframes logoGlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes fadeScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes networkFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px);
+  }
+  50% {
+    transform: translateY(-5px) translateX(-5px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(3px);
+  }
+}
+
+/* Skeleton shimmer - smooth, no flicker */
+@keyframes shimmer {
+  0% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.65;
+  }
+}
+
+.skeleton-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Content fade-in when data loads (300-500ms, no layout shift) */
+.product-content-enter {
+  animation: productContentFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes productContentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Network background animation — only clip horizontally so page scroll is never blocked */
+.network-bg {
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.network-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, hsl(205 85% 45% / 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, hsl(205 75% 55% / 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, hsl(205 85% 45% / 0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
