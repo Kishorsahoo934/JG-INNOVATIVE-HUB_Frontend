@@ -11,6 +11,7 @@ import QuickViewModal from './QuickViewModal';
 import { useToast } from '@/hooks/use-toast';
 import { productsApi } from '../services/api';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
+import { useAuth } from '../context/AuthContext';
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +23,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [isAddingContactUs, setIsAddingContactUs] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   
   const { addToCart, isInCart, getQuantity, updateQuantity } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -44,6 +46,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingWishlistItem', JSON.stringify({ productId: product._id }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to save items to your wishlist.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/wishlist');
+      return;
+    }
     if (inWishlist) {
       removeFromWishlist(product._id);
     } else {
@@ -51,15 +63,29 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (product.stock <= 0) {
       toast({ title: 'Out of stock', description: 'This product is currently unavailable.', variant: 'destructive' });
       return;
     }
-    addToCart(product, 1);
-    toast({ title: 'Added to cart', description: product.name });
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({ productId: product._id, quantity: 1 }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to add items to your cart.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/cart');
+      return;
+    }
+    const ok = await addToCart(product, 1);
+    if (ok) {
+      toast({ title: 'Added to cart', description: product.name });
+    } else {
+      toast({ title: 'Error', description: 'Could not add item to cart. Please try again.', variant: 'destructive' });
+    }
   };
 
   const cardCartQty = getQuantity(product._id);
@@ -72,6 +98,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
       const res = await productsApi.getById(CONTACT_US_3D_SKU);
       if (res.success && res.data) {
         sessionStorage.setItem('buyNowItem', JSON.stringify({ product: res.data, quantity: 1 }));
+        if (!isAuthenticated) {
+          toast({
+            title: 'Login Required',
+            description: 'Please log in or sign up to proceed to checkout and place your order.',
+            variant: 'destructive',
+          });
+          navigate('/login?redirect=/checkout');
+          return;
+        }
         navigate('/checkout');
       } else {
         toast({ title: 'Error', description: 'Could not open checkout. Try again.', variant: 'destructive' });
@@ -103,7 +138,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
       return;
     }
     sessionStorage.setItem('buyNowItem', JSON.stringify({ product, quantity: 1 }));
-    navigate('/checkout');
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in or sign up to proceed to checkout and place your order.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/checkout');
+    } else {
+      navigate('/checkout');
+    }
   };
 
   return (
@@ -124,6 +168,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
             className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             decoding="async"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src !== PLACEHOLDER_IMAGE && !target.src.endsWith(PLACEHOLDER_IMAGE)) {
+                target.onerror = null;
+                target.src = PLACEHOLDER_IMAGE;
+              }
+            }}
           />
             
           {/* Discount Badge */}

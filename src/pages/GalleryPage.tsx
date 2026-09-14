@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import SEO from '@/components/SEO';
 import { Camera, X, ZoomIn } from 'lucide-react';
 import { galleryApi, GalleryItem } from '@/services/api';
+import { PLACEHOLDER_IMAGE } from '@/constants/media';
 
 const dummyGalleryItems: GalleryItem[] = [
   {
@@ -170,10 +171,17 @@ const GalleryPage = () => {
                     {/* Aspect Ratio Container */}
                     <div className="w-full h-56 overflow-hidden relative">
                       <img
-                        src={item.image}
+                        src={item.image || PLACEHOLDER_IMAGE}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                         loading="lazy"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== PLACEHOLDER_IMAGE && !target.src.endsWith(PLACEHOLDER_IMAGE)) {
+                            target.onerror = null;
+                            target.src = PLACEHOLDER_IMAGE;
+                          }
+                        }}
                       />
                       {/* Hover Overlay */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -225,9 +233,16 @@ const GalleryPage = () => {
           >
             <div className="w-full max-h-[70vh] overflow-hidden">
               <img
-                src={selectedImage.image}
+                src={selectedImage.image || PLACEHOLDER_IMAGE}
                 alt={selectedImage.title}
                 className="w-full h-full object-contain"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== PLACEHOLDER_IMAGE && !target.src.endsWith(PLACEHOLDER_IMAGE)) {
+                    target.onerror = null;
+                    target.src = PLACEHOLDER_IMAGE;
+                  }
+                }}
               />
             </div>
             <div className="p-6 md:p-8 w-full text-left bg-gradient-to-t from-[#0b0e17] to-[#0d1527]">

@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { User, ArrowRight, LayoutDashboard, Clock } from 'lucide-react';
+import { User, LogIn, ArrowRight, LayoutDashboard, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../context/AuthContext';
 import LogoMark from '@/components/LogoMark';
+import { UserMenuDropdown } from './UserMenuDropdown';
 
 const AcademyHeader = () => {
   const { user, isAuthenticated } = useAuth();
@@ -64,12 +65,16 @@ const AcademyHeader = () => {
           <div className="flex items-center gap-3 shrink-0">
             {renderTutorButton()}
 
-            <Link to="/account">
-              <Button variant="default" size="sm" className="gap-1.5 rounded-full px-4 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-white font-medium">
-                <User className="w-3.5 h-3.5" />
-                <span>My Account</span>
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <UserMenuDropdown />
+            ) : (
+              <Link to="/login">
+                <Button variant="default" size="sm" className="gap-1.5 rounded-full px-4 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-white font-medium">
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Login / Sign Up</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

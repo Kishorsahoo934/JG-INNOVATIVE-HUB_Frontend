@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Minus, Plus, ShoppingCart, Heart, Share2, Pl
 import SEO from '@/components/SEO';
 import { projectsApi, reviewsApi } from '../services/api';
 import type { Product, Project } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import EShopLayout from '../components/EShopLayout';
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const [project, setProject] = useState<Project | null>(null);
   const [relatedProjects, setRelatedProjects] = useState<Project[]>([]);
@@ -103,7 +105,7 @@ const ProjectDetailPage = () => {
     }));
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!project) return;
     const prodAdapter = {
       ...project,
@@ -112,11 +114,26 @@ const ProjectDetailPage = () => {
       cloudinaryUrl: project.images[0] || ''
     } as Product;
 
-    addToCart(prodAdapter, quantity);
-    toast({
-      title: 'Added to Cart',
-      description: `${quantity} × ${project.name} combo kit has been added to your cart.`
-    });
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({ productId: project._id, quantity }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to add items to your cart.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/cart');
+      return;
+    }
+
+    const ok = await addToCart(prodAdapter, quantity);
+    if (ok) {
+      toast({
+        title: 'Added to Cart',
+        description: `${quantity} × ${project.name} combo kit has been added to your cart.`
+      });
+    } else {
+      toast({ title: 'Error', description: 'Could not add item to cart. Please try again.', variant: 'destructive' });
+    }
   };
 
   const handleBuyNow = () => {
@@ -129,6 +146,15 @@ const ProjectDetailPage = () => {
     } as Product;
 
     sessionStorage.setItem('buyNowItem', JSON.stringify({ product: prodAdapter, quantity }));
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to proceed with your order.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/checkout');
+      return;
+    }
     navigate('/checkout');
   };
 
@@ -140,6 +166,17 @@ const ProjectDetailPage = () => {
       subcategory: project.projectType,
       cloudinaryUrl: project.images[0] || ''
     } as Product;
+
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingWishlistItem', JSON.stringify({ productId: project._id }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to save items to your wishlist.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/wishlist');
+      return;
+    }
 
     if (isInWishlist(project._id)) {
       removeFromWishlist(project._id);

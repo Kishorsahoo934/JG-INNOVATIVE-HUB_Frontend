@@ -27,52 +27,58 @@ const OrderDetailPage = () => {
   const [isOpeningInvoice, setIsOpeningInvoice] = useState(false);
   const [orderIdCopied, setOrderIdCopied] = useState(false);
 
-  const fetchOrder = async () => {
+  useEffect(() => {
     if (!orderId) return;
-    setIsLoading(true);
-    setOrder(null);
-    setAccessMode('owner');
-    try {
-      if (isAuthenticated) {
+    let cancelled = false;
+
+    const doFetch = async () => {
+      setIsLoading(true);
+      setOrder(null);
+      setAccessMode('owner');
+      try {
+        if (isAuthenticated) {
+          try {
+            const response = await ordersApi.getById(orderId);
+            if (cancelled) return;
+            if (response.success && response.data?._id) {
+              setOrder(response.data);
+              setAccessMode('owner');
+              return;
+            }
+          } catch {
+            if (cancelled) return;
+            /* not owner or error — try guest tracking below */
+          }
+        }
+
+        let stored: { orderId?: string; email?: string } | null = null;
         try {
-          const response = await ordersApi.getById(orderId);
-          if (response.success && response.data?._id) {
-            setOrder(response.data);
-            setAccessMode('owner');
+          const raw = sessionStorage.getItem(ORDER_TRACK_STORAGE_KEY);
+          if (raw) stored = JSON.parse(raw) as { orderId?: string; email?: string };
+        } catch {
+          stored = null;
+        }
+        if (stored?.orderId === orderId && stored.email) {
+          const res = await ordersApi.trackOrder(orderId, stored.email);
+          if (cancelled) return;
+          if (res.success && res.data?._id) {
+            setOrder(res.data);
+            setAccessMode('guest');
             return;
           }
-        } catch {
-          /* not owner or error — try guest tracking below */
         }
-      }
 
-      let stored: { orderId?: string; email?: string } | null = null;
-      try {
-        const raw = sessionStorage.getItem(ORDER_TRACK_STORAGE_KEY);
-        if (raw) stored = JSON.parse(raw) as { orderId?: string; email?: string };
-      } catch {
-        stored = null;
+        if (!cancelled) setOrder(null);
+      } catch (error) {
+        console.error('Failed to fetch order:', error);
+        if (!cancelled) setOrder(null);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      if (stored?.orderId === orderId && stored.email) {
-        const res = await ordersApi.trackOrder(orderId, stored.email);
-        if (res.success && res.data?._id) {
-          setOrder(res.data);
-          setAccessMode('guest');
-          return;
-        }
-      }
+    };
 
-      setOrder(null);
-    } catch (error) {
-      console.error('Failed to fetch order:', error);
-      setOrder(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (orderId) fetchOrder();
+    doFetch();
+    return () => { cancelled = true; };
   }, [orderId, isAuthenticated]);
 
   const canHaveInvoice =
@@ -91,7 +97,6 @@ const OrderDetailPage = () => {
       if (data?.invoiceUrl) {
         setOrder({ ...order, invoiceUrl: data.invoiceUrl, invoiceNumber: data.invoiceNumber || order.invoiceNumber });
       }
-      await fetchOrder();
     } catch (e) {
       console.error('Generate invoice failed:', e);
     } finally {

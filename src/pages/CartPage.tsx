@@ -1,20 +1,57 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import EShopLayout from '../components/EShopLayout';
 import SEO from '@/components/SEO';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { calculateGstBreakdown, formatPrice } from '@/utils/price';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
+import { useToast } from '@/hooks/use-toast';
 
 const CartPage = () => {
+  const navigate = useNavigate();
   const { items, totalItems, totalPrice, removeFromCart, updateQuantity } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleProceedToCheckout = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in or sign up to proceed to checkout and place your order.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/checkout');
+    } else {
+      navigate('/checkout');
+    }
+  };
 
   useEffect(() => {
     sessionStorage.removeItem('buyNowItem');
-  }, []);
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to view your shopping cart.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/cart', { replace: true });
+    }
+  }, [isAuthenticated, navigate, toast]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -99,7 +136,27 @@ const CartPage = () => {
                     </button>
                   </div>
                   <span className="font-bold text-sm sm:text-base tabular-nums min-h-[44px] flex items-center sm:justify-end w-full sm:w-auto">₹{formatPrice(product.price * quantity)}</span>
-                  <button type="button" onClick={() => removeFromCart(product._id)} className="text-muted-foreground hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation rounded-lg shrink-0" aria-label="Remove from cart"><Trash2 className="w-4 h-4" /></button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation rounded-lg shrink-0" aria-label="Remove from cart">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remove item?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to remove "{product.name}" from your cart?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => removeFromCart(product._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             );})}
@@ -114,7 +171,7 @@ const CartPage = () => {
             <div className="border-t border-border pt-3 sm:pt-4 mb-4 sm:mb-6">
               <div className="flex justify-between text-base sm:text-lg font-bold"><span>Total Payable</span><span className="text-primary">₹{formatPrice(breakdown.total)}</span></div>
             </div>
-            <Link to="/checkout"><Button className="w-full" size="lg">Proceed to Checkout</Button></Link>
+            <Button onClick={handleProceedToCheckout} className="w-full" size="lg">Proceed to Checkout</Button>
           </div>
         </div>
       </div>

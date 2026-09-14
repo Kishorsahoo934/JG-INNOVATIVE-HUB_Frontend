@@ -1,13 +1,15 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, User, Heart, ShoppingCart, Search } from 'lucide-react';
+import { Menu, User, LogIn, Heart, ShoppingCart, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useAuth } from '../context/AuthContext';
 import { useCategories } from '../hooks/useCategories';
 import CategorySidebar from './CategorySidebar';
 import LogoMark from '@/components/LogoMark';
+import { UserMenuDropdown } from './UserMenuDropdown';
 
 interface EShopHeaderProps {
   searchQuery?: string;
@@ -22,6 +24,7 @@ const EShopHeader = ({ searchQuery = '', onSearchChange, hideSearch = false }: E
   const { totalItems: cartItems } = useCart();
   const { totalItems: wishlistItems } = useWishlist();
   const { categories } = useCategories();
+  const { isAuthenticated, user } = useAuth();
 
   const isProjectPage = location.pathname.startsWith('/project-kits') || location.pathname.startsWith('/project/');
 
@@ -94,12 +97,18 @@ const EShopHeader = ({ searchQuery = '', onSearchChange, hideSearch = false }: E
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-2 md:gap-4 shrink-0">
-              <Link to="/account">
-                <Button variant="default" size="sm" className="gap-2 rounded-full px-5 hidden md:flex">
-                  <User className="w-4 h-4" />
-                  My Account
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <div className="hidden md:flex">
+                  <UserMenuDropdown />
+                </div>
+              ) : (
+                <Link to="/login">
+                  <Button variant="default" size="sm" className="gap-2 rounded-full px-5 hidden md:flex">
+                    <LogIn className="w-4 h-4" />
+                    Login / Sign Up
+                  </Button>
+                </Link>
+              )}
               
               <Link to="/wishlist" className="relative p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-primary transition-colors touch-manipulation rounded-lg">
                 <Heart className="w-5 h-5" />

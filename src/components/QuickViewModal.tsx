@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '../context/AuthContext';
 import { Product } from '../utils/products';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -25,6 +26,7 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
   const [isAddingContactUs, setIsAddingContactUs] = useState(false);
   const autoSlideRef = useRef<number | null>(null);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { addToCart, isInCart, getQuantity, updateQuantity } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
@@ -48,13 +50,28 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
     setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.stock <= 0) {
       toast({ title: 'Out of stock', description: 'This product is currently unavailable.', variant: 'destructive' });
       return;
     }
-    addToCart(product, 1);
-    toast({ title: 'Added to cart', description: product.name });
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({ productId: product._id, quantity: 1 }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to add items to your cart.',
+        variant: 'destructive',
+      });
+      onClose();
+      navigate('/login?redirect=/cart');
+      return;
+    }
+    const ok = await addToCart(product, 1);
+    if (ok) {
+      toast({ title: 'Added to cart', description: product.name });
+    } else {
+      toast({ title: 'Error', description: 'Could not add item to cart. Please try again.', variant: 'destructive' });
+    }
   };
 
   const qvQty = getQuantity(product._id);
@@ -66,6 +83,15 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
       if (res.success && res.data) {
         onClose();
         sessionStorage.setItem('buyNowItem', JSON.stringify({ product: res.data, quantity: 1 }));
+        if (!isAuthenticated) {
+          toast({
+            title: 'Login Required',
+            description: 'Please sign in to proceed with your order.',
+            variant: 'destructive',
+          });
+          navigate('/login?redirect=/checkout');
+          return;
+        }
         navigate('/checkout');
       } else {
         toast({ title: 'Error', description: 'Could not open checkout. Try again.', variant: 'destructive' });
@@ -78,6 +104,17 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
   };
 
   const handleWishlistToggle = () => {
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingWishlistItem', JSON.stringify({ productId: product._id }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to save items to your wishlist.',
+        variant: 'destructive',
+      });
+      onClose();
+      navigate('/login?redirect=/wishlist');
+      return;
+    }
     if (inWishlist) {
       removeFromWishlist(product._id);
     } else {
@@ -140,6 +177,13 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
               className="w-full h-full object-contain p-6"
               loading="lazy"
               decoding="async"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== PLACEHOLDER_IMAGE && !target.src.endsWith(PLACEHOLDER_IMAGE)) {
+                  target.onerror = null;
+                  target.src = PLACEHOLDER_IMAGE;
+                }
+              }}
             />
             
             {/* Navigation Arrows */}

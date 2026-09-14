@@ -152,7 +152,11 @@ const AboutPage = () => {
                         src="/assets/JP Poster.png" 
                         alt="Jagadeswar Pati"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=350&auto=format&fit=crop&q=80';
+                          const target = e.currentTarget;
+                          if (target.src !== '/placeholder.svg' && !target.src.endsWith('/placeholder.svg')) {
+                            target.onerror = null;
+                            target.src = '/placeholder.svg';
+                          }
                         }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -189,7 +193,11 @@ const AboutPage = () => {
                         src="/assets/My Poster.png" 
                         alt="Gopal Krushna Mahapatra"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=350&auto=format&fit=crop&q=80';
+                          const target = e.currentTarget;
+                          if (target.src !== '/placeholder.svg' && !target.src.endsWith('/placeholder.svg')) {
+                            target.onerror = null;
+                            target.src = '/placeholder.svg';
+                          }
                         }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

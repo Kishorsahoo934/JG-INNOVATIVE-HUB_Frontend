@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
@@ -5,14 +7,39 @@ import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/utils/price';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const WishlistPage = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { items, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to view your wishlist.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/wishlist', { replace: true });
+    }
+  }, [isAuthenticated, navigate, toast]);
 
   if (items.length === 0) {
   return (
@@ -117,15 +144,35 @@ const WishlistPage = () => {
                     <ShoppingCart className="w-4 h-4 shrink-0" />
                     Add to Cart
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="gap-2 min-h-[48px] touch-manipulation w-full sm:w-auto"
-                    onClick={(e) => handleRemove(e, product._id)}
-                  >
-                    <Trash2 className="w-4 h-4 shrink-0" />
-                    Remove
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 min-h-[48px] touch-manipulation w-full sm:w-auto"
+                      >
+                        <Trash2 className="w-4 h-4 shrink-0" />
+                        Remove
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remove from Wishlist?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to remove "{product.name}" from your wishlist?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={(e) => handleRemove(e as any, product._id)} 
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
               );

@@ -111,9 +111,29 @@ const InternshipsPage = () => {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    const loadApplications = async () => {
+      if (!isAuthenticated) return;
+      setIsLoadingApps(true);
+      try {
+        const res = await internshipsApi.getMyApplications();
+        if (!cancelled && res.success) {
+          setMyApplications(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load applications:', err);
+      } finally {
+        if (!cancelled) setIsLoadingApps(false);
+      }
+    };
+
     if (isAuthenticated) {
-      fetchMyApplications();
+      loadApplications();
     }
+    
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated]);
 
 
