@@ -15,6 +15,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -125,43 +136,53 @@ const AccountPage = () => {
 
   // Fetch orders from API
   useEffect(() => {
+    let cancelled = false;
     const fetchOrders = async () => {
       setIsLoadingOrders(true);
       try {
         const response = await ordersApi.getMyOrders();
-        if (response.success) {
+        if (!cancelled && response.success) {
           setOrders(response.data);
         }
       } catch {
-        setOrders([]);
+        if (!cancelled) setOrders([]);
       } finally {
-        setIsLoadingOrders(false);
+        if (!cancelled) setIsLoadingOrders(false);
       }
     };
     
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role !== 'admin') {
       fetchOrders();
     }
-  }, [isAuthenticated]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.role]);
 
   // Fetch booked sessions
   useEffect(() => {
+    let cancelled = false;
     const fetchSessions = async () => {
-      if (!isAuthenticated) return;
+      if (!isAuthenticated || user?.role === 'admin') return;
       setIsLoadingSessions(true);
       try {
         const sessionRes = await sessionsApi.getStudentSessions();
-        if (sessionRes.success) {
+        if (!cancelled && sessionRes.success) {
           setStudentSessions(sessionRes.data);
         }
       } catch (err) {
         console.error('Failed to fetch student sessions:', err);
       } finally {
-        setIsLoadingSessions(false);
+        if (!cancelled) setIsLoadingSessions(false);
       }
     };
     fetchSessions();
-  }, [isAuthenticated]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.role]);
 
   // Get wishlist products - wishlistItems is Product[]
   const wishlistProducts = wishlistItems;
@@ -234,6 +255,10 @@ const AccountPage = () => {
   // Handle address save
   const handleAddressSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user?.role === 'admin') {
+      toast({ title: 'Not allowed', description: 'Admins cannot save addresses.', variant: 'destructive' });
+      return;
+    }
     const mobileDigits = addressForm.mobile.replace(/\D/g, '');
     if (mobileDigits.length < 10) {
       toast({ title: 'Invalid mobile', description: 'Enter a valid mobile number (at least 10 digits).', variant: 'destructive' });
@@ -393,53 +418,133 @@ const AccountPage = () => {
     <Layout>
       <SEO title="My Account" description="Manage your Innovative Hub account, orders, and addresses." path="/account" noIndex />
       <div className="network-bg py-6 sm:py-8 md:py-12 min-h-screen min-h-[100dvh]">
-        <div className="container mx-auto px-3 sm:px-4 max-w-full">
-          {/* Header */}
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2">My Account</h1>
-            <p className="text-muted-foreground">Welcome back, {user?.name || user?.email?.split('@')[0] || 'User'}!</p>
-          </div>
+        <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
+          {/* Production E-Commerce Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
+            {/* Account Sidebar Navigation */}
+            <div className="space-y-4">
+              {/* User Identity Card */}
+              <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg shrink-0">
+                  {(user?.name || user?.email || 'U')[0].toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Hello,</p>
+                  <h2 className="text-base font-bold text-foreground truncate leading-tight">
+                    {user?.name || user?.email?.split('@')[0] || 'User'}
+                  </h2>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email}</p>
+                </div>
+              </div>
 
-          {/* Dashboard Tabs */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
-            <TabsList className="bg-card/60 backdrop-blur-sm border border-border p-1 h-auto flex-wrap gap-1">
-              <TabsTrigger value="orders" className="gap-2 min-h-[44px] touch-manipulation data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Package className="w-4 h-4" />
-                <span className="hidden sm:inline">My Orders</span>
-                <span className="sm:hidden">Orders</span>
-              </TabsTrigger>
+              {/* Account Navigation Menu */}
+              <div className="bg-card border border-border rounded-2xl p-2 shadow-sm space-y-1">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('orders')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'orders'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Package className="w-4.5 h-4.5" />
+                    <span>My Orders</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-60" />
+                </button>
 
-              <TabsTrigger value="sessions" className="gap-2 min-h-[44px] touch-manipulation data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Calendar className="w-4 h-4" />
-                <span className="hidden sm:inline">My Sessions</span>
-                <span className="sm:hidden">Sessions</span>
-              </TabsTrigger>
-              <TabsTrigger value="wishlist" className="gap-2 min-h-[44px] touch-manipulation data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Heart className="w-4 h-4" />
-                <span className="hidden sm:inline">Wishlist</span>
-                <span className="sm:hidden">Wishlist</span>
-                {wishlistProducts.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 justify-center">
-                    {wishlistProducts.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2 min-h-[44px] touch-manipulation data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Settings</span>
-                <span className="sm:hidden">Settings</span>
-              </TabsTrigger>
-              <TabsTrigger value="addresses" className="gap-2 min-h-[44px] touch-manipulation data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <MapPin className="w-4 h-4" />
-                <span className="hidden sm:inline">Addresses</span>
-                <span className="sm:hidden">Address</span>
-              </TabsTrigger>
-              <TabsTrigger value="logout" className="gap-2 min-h-[44px] touch-manipulation text-destructive data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground">
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-                <span className="sm:hidden">Logout</span>
-              </TabsTrigger>
-            </TabsList>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('sessions')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'sessions'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-4.5 h-4.5" />
+                    <span>My Sessions</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-60" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('wishlist')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'wishlist'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Heart className="w-4.5 h-4.5" />
+                    <span>Wishlist</span>
+                  </div>
+                  {wishlistProducts.length > 0 && (
+                    <Badge variant={activeTab === 'wishlist' ? 'secondary' : 'default'} className="text-xs">
+                      {wishlistProducts.length}
+                    </Badge>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('addresses')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'addresses'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4.5 h-4.5" />
+                    <span>Saved Addresses</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-60" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('settings')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'settings'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-4.5 h-4.5" />
+                    <span>Account Settings</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-60" />
+                </button>
+
+                <div className="pt-2 border-t border-border/60">
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('logout')}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      activeTab === 'logout'
+                        ? 'bg-destructive text-destructive-foreground shadow-sm'
+                        : 'text-destructive hover:bg-destructive/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <LogOut className="w-4.5 h-4.5" />
+                      <span>Logout</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="min-w-0">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
 
             {/* My Orders Tab */}
             <TabsContent value="orders" className="space-y-4">
@@ -987,14 +1092,34 @@ const AccountPage = () => {
                                 Set Default
                               </Button>
                             )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive w-full sm:w-auto"
-                              onClick={() => handleAddressDelete(addrId)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive w-full sm:w-auto"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Address?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this address? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleAddressDelete(addrId)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </div>
                       ); })}
@@ -1104,6 +1229,8 @@ const AccountPage = () => {
               </Card>
             </TabsContent>
           </Tabs>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

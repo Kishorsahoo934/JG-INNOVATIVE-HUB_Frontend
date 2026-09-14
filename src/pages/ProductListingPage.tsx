@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { ChevronDown, Grid3X3, List, Loader2 } from 'lucide-react';
+import { ChevronDown, Grid3X3, List, Loader2, SlidersHorizontal, Filter, X } from 'lucide-react';
 import EShopLayout from '../components/EShopLayout';
 import ProductCard from '../components/ProductCard';
 import SEO from '@/components/SEO';
@@ -21,6 +21,7 @@ import {
 const PAGE_SIZE = productsApi.pageSize;
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'name';
+type PriceRange = 'all' | 'under-500' | '500-2000' | 'above-2000';
 
 interface ProductListingPageProps {
   /** When true, render inside main site Layout (no EShop header) */
@@ -34,6 +35,8 @@ const ProductListingPage = ({ useMainLayout = false }: ProductListingPageProps) 
 
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [priceRange, setPriceRange] = useState<PriceRange>('all');
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
@@ -133,28 +136,48 @@ const ProductListingPage = ({ useMainLayout = false }: ProductListingPageProps) 
   }, [hasMore, isLoadingMore, isLoading, total, fetchPage]);
 
   const filteredAndSortedProducts = useMemo(() => {
+    let result = [...products];
+
+    // Filter by stock
+    if (inStockOnly) {
+      result = result.filter((p) => (p.stock ?? 0) > 0);
+    }
+
+    // Filter by price range
+    if (priceRange === 'under-500') {
+      result = result.filter((p) => (p.price ?? 0) < 500);
+    } else if (priceRange === '500-2000') {
+      result = result.filter((p) => (p.price ?? 0) >= 500 && (p.price ?? 0) <= 2000);
+    } else if (priceRange === 'above-2000') {
+      result = result.filter((p) => (p.price ?? 0) > 2000);
+    }
+
+    // Search scoring
     const q = searchParam.trim().toLowerCase();
-    if (!q) return products;
-    const words = q.split(/\s+/).filter(Boolean);
-    const scoreProduct = (product: Product) => {
-      const name = (product.name ?? '').toLowerCase();
-      const category = (product.category ?? '').toLowerCase();
-      const desc = (product.shortDescription ?? '').replace(/<[^>]*>/g, ' ').toLowerCase();
-      let score = 0;
-      for (const w of words) {
-        if (name.startsWith(w)) score += 10;
-        else if (name.includes(w)) score += 7;
-        if (category.includes(w)) score += 3;
-        if (desc.includes(w)) score += 2;
-      }
-      return score;
-    };
-    return [...products].sort((a, b) => {
-      const diff = scoreProduct(b) - scoreProduct(a);
-      if (diff !== 0) return diff;
-      return (a.name || '').localeCompare(b.name || '');
-    });
-  }, [products, searchParam]);
+    if (q) {
+      const words = q.split(/\s+/).filter(Boolean);
+      const scoreProduct = (product: Product) => {
+        const name = (product.name ?? '').toLowerCase();
+        const category = (product.category ?? '').toLowerCase();
+        const desc = (product.shortDescription ?? '').replace(/<[^>]*>/g, ' ').toLowerCase();
+        let score = 0;
+        for (const w of words) {
+          if (name.startsWith(w)) score += 10;
+          else if (name.includes(w)) score += 7;
+          if (category.includes(w)) score += 3;
+          if (desc.includes(w)) score += 2;
+        }
+        return score;
+      };
+      result.sort((a, b) => {
+        const diff = scoreProduct(b) - scoreProduct(a);
+        if (diff !== 0) return diff;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+    }
+
+    return result;
+  }, [products, searchParam, priceRange, inStockOnly]);
 
   const sortLabels: Record<SortOption, string> = {
     newest: 'Newest First',
@@ -251,7 +274,46 @@ const ProductListingPage = ({ useMainLayout = false }: ProductListingPageProps) 
             </p>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Price Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-1.5 text-xs sm:text-sm px-3.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>
+                    {priceRange === 'under-500' ? 'Under ₹500' :
+                     priceRange === '500-2000' ? '₹500 - ₹2,000' :
+                     priceRange === 'above-2000' ? 'Above ₹2,000' : 'Price: All'}
+                  </span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setPriceRange('all')} className={priceRange === 'all' ? 'bg-secondary font-medium' : ''}>
+                  All Prices
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPriceRange('under-500')} className={priceRange === 'under-500' ? 'bg-secondary font-medium' : ''}>
+                  Under ₹500
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPriceRange('500-2000')} className={priceRange === '500-2000' ? 'bg-secondary font-medium' : ''}>
+                  ₹500 - ₹2,000
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPriceRange('above-2000')} className={priceRange === 'above-2000' ? 'bg-secondary font-medium' : ''}>
+                  Above ₹2,000
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* In-Stock Toggle Button */}
+            <Button
+              variant={inStockOnly ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setInStockOnly(!inStockOnly)}
+              className="text-xs sm:text-sm px-3"
+            >
+              In Stock Only
+            </Button>
+
             {/* Sort Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -266,13 +328,29 @@ const ProductListingPage = ({ useMainLayout = false }: ProductListingPageProps) 
                   <DropdownMenuItem 
                     key={option}
                     onClick={() => setSortBy(option)}
-                    className={sortBy === option ? 'bg-secondary' : ''}
+                    className={sortBy === option ? 'bg-secondary font-medium' : ''}
                   >
                     {sortLabels[option]}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Clear Active Filters */}
+            {(priceRange !== 'all' || inStockOnly) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPriceRange('all');
+                  setInStockOnly(false);
+                }}
+                className="text-xs text-destructive hover:text-destructive gap-1 px-2"
+              >
+                <X className="w-3 h-3" />
+                Clear
+              </Button>
+            )}
 
             {/* View Toggle - touch-friendly */}
             <div className="flex border border-border rounded-lg overflow-hidden">

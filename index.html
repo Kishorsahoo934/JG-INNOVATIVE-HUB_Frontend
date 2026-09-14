@@ -111,12 +111,12 @@
 
   <body>
     <div id="root">
-      <!-- Replaced on React mount; gives crawlers and slow networks visible text before JS -->
-      <div id="ih-static-boot" style="padding:1.25rem;max-width:42rem;margin:0 auto;font-family:system-ui,sans-serif;line-height:1.5;color:#1e293b">
-        <p style="font-weight:700;font-size:1.125rem;margin:0 0 0.5rem">JG Innovative Hub</p>
-        <p style="margin:0 0 0.75rem;font-size:0.9375rem">
-          Robotics, IoT &amp; embedded systems in Odisha — electronic components, kits and learning resources for students and makers.
-        </p>
+      <div id="ih-static-boot" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fafbfc;color:#1e293b;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-align:center;padding:1.5rem">
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;width:4.5rem;height:4.5rem;background:#ffffff;border-radius:1rem;box-shadow:0 4px 20px -2px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);margin-bottom:1.25rem">
+          <img src="/assets/logo.png?v=ih4" alt="Innovative Hub" style="max-height:2.75rem;width:auto;object-fit:contain" />
+        </div>
+        <div style="width:1.75rem;height:1.75rem;border:2.5px solid #e2e8f0;border-top-color:#0284c7;border-radius:50%;animation:ih-spin 0.75s linear infinite"></div>
+        <style>@keyframes ih-spin{to{transform:rotate(360deg)}}</style>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

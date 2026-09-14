@@ -31,8 +31,26 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in or sign up to proceed to checkout and place your order.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/checkout', { replace: true });
+    } else if (!authLoading && user?.role === 'admin') {
+      toast({
+        title: 'Not Allowed',
+        description: 'Admins cannot place orders. Please use a student or regular account.',
+        variant: 'destructive',
+      });
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, user, navigate, toast]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -143,14 +161,6 @@ const CheckoutPage = () => {
     }
   }, []);
 
-  /** Cart always wins over a stale Buy now session when both exist */
-  useEffect(() => {
-    if (items.length > 0 && buyNowItem) {
-      sessionStorage.removeItem('buyNowItem');
-      setBuyNowItem(null);
-    }
-  }, [items.length, buyNowItem]);
-
   const detachPaymentPopstateGuard = useCallback(() => {
     const h = popStateHandlerRef.current;
     if (h) {
@@ -196,11 +206,17 @@ const CheckoutPage = () => {
       setStateCharges(null);
       return;
     }
+    let cancelled = false;
     deliveryApi.getStateCharges(addressState).then((data) => {
-      setStateCharges({
-        defaultShippingCharge: data.defaultShippingCharge ?? 0,
-      });
-    }).catch(() => setStateCharges({ defaultShippingCharge: 0 }));
+      if (!cancelled) {
+        setStateCharges({
+          defaultShippingCharge: data.defaultShippingCharge ?? 0,
+        });
+      }
+    }).catch(() => {
+      if (!cancelled) setStateCharges({ defaultShippingCharge: 0 });
+    });
+    return () => { cancelled = true; };
   }, [addressState]);
 
   const normalizedProfileMobile = useMemo(
@@ -217,7 +233,7 @@ const CheckoutPage = () => {
     }
   }, [hasProfileMobile]);
 
-  const usingBuyNowCheckout = items.length === 0 && buyNowItem != null;
+  const usingBuyNowCheckout = buyNowItem != null;
   const checkoutItems = usingBuyNowCheckout
     ? [{ product: buyNowItem!.product, quantity: buyNowItem!.quantity }]
     : items;

@@ -48,10 +48,42 @@ const WorkshopsPage = () => {
   };
 
   useEffect(() => {
-    fetchWorkshops();
+    let cancelled = false;
+
+    const loadWorkshops = async () => {
+      setIsLoading(true);
+      try {
+        const res = await workshopsApi.getAll();
+        if (!cancelled && res.success) {
+          setWorkshops(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load workshops:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    const loadEnrolledWorkshops = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const res = await workshopsApi.getEnrolled();
+        if (!cancelled && res.success) {
+          setEnrolledWorkshops(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load enrolled workshops:', err);
+      }
+    };
+
+    loadWorkshops();
     if (isAuthenticated) {
-      fetchEnrolledWorkshops();
+      loadEnrolledWorkshops();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated]);
 
   const handleEnroll = async (workshopId: string) => {

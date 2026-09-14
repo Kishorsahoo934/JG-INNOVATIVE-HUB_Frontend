@@ -23,7 +23,7 @@ type CartAction =
   | { type: 'LOAD_CART'; payload: CartItem[] };
 
 interface CartContextType extends CartState {
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number) => Promise<boolean>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -76,19 +76,25 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
 
     case 'REMOVE_FROM_CART':
-      newItems = state.items.filter((item) => item.product._id !== action.payload);
+      newItems = state.items.filter(
+        (item) => item.product._id !== action.payload && item.product.sku !== action.payload
+      );
       return { items: newItems, ...calculateTotals(newItems) };
 
     case 'UPDATE_QUANTITY': {
       const { productId, quantity } = action.payload;
-      const item = state.items.find((i) => i.product._id === productId);
+      const item = state.items.find(
+        (i) => i.product._id === productId || i.product.sku === productId
+      );
       if (!item) return state;
       const capped = clampCartQuantity(item.product, quantity);
       if (capped <= 0) {
-        newItems = state.items.filter((i) => i.product._id !== productId);
+        newItems = state.items.filter(
+          (i) => i.product._id !== productId && i.product.sku !== productId
+        );
       } else {
         newItems = state.items.map((i) =>
-          i.product._id === productId ? { ...i, quantity: capped } : i
+          i.product._id === productId || i.product.sku === productId ? { ...i, quantity: capped } : i
         );
       }
       return { items: newItems, ...calculateTotals(newItems) };
@@ -117,90 +123,110 @@ const reloadServerCart = async (dispatch: React.Dispatch<CartAction>) => {
 };
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     totalItems: 0,
     totalPrice: 0,
   });
 
+  // Skip cart/wishlist for admin users — they don't have user-collection carts
+  const isRegularUser = isAuthenticated && user?.role !== 'admin';
+
   useEffect(() => {
     const loadCart = async () => {
-      if (!isAuthenticated) {
-        const raw = localStorage.getItem(GUEST_CART_KEY);
-        if (!raw) {
-          dispatch({ type: 'LOAD_CART', payload: [] });
-          return;
-        }
-        try {
-          const items = JSON.parse(raw) as CartItem[];
-          dispatch({ type: 'LOAD_CART', payload: Array.isArray(items) ? items : [] });
-        } catch {
-          localStorage.removeItem(GUEST_CART_KEY);
-          dispatch({ type: 'LOAD_CART', payload: [] });
-        }
+      if (!isRegularUser) {
+        localStorage.removeItem(GUEST_CART_KEY);
+        dispatch({ type: 'LOAD_CART', payload: [] });
         return;
       }
-      try {
-        const res = await cartApi.get();
-        if (res.success) {
-          dispatch({ type: 'LOAD_CART', payload: res.data });
+
+      // Process any pending cart item stored before login redirect
+      const pending = sessionStorage.getItem('pendingCartItem');
+      if (pending) {
+        sessionStorage.removeItem('pendingCartItem');
+        try {
+          const parsed: unknown = JSON.parse(pending);
+          if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'productId' in parsed &&
+            typeof parsed.productId === 'string' &&
+            parsed.productId.length > 0
+          ) {
+            const quantity =
+              'quantity' in parsed && typeof parsed.quantity === 'number'
+                ? parsed.quantity
+                : 1;
+            await cartApi.add(parsed.productId, quantity);
+          }
+        } catch (error) {
+          console.error('Failed to restore pending cart item:', error);
         }
-      } catch (error) {
-        console.error('Failed to load cart:', error);
       }
+
+      await reloadServerCart(dispatch);
     };
-    loadCart();
-  }, [isAuthenticated]);
+
+    void loadCart();
+  }, [isRegularUser]);
 
   useEffect(() => {
-    if (isAuthenticated) return;
-    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(state.items));
-  }, [state.items, isAuthenticated]);
-
-  const addToCart = (product: Product, quantity: number = 1) => {
-    const q = Math.max(1, Math.floor(quantity));
     if (!isAuthenticated) {
-      dispatch({ type: 'ADD_TO_CART', payload: { product, quantity: q } });
-      return;
+      localStorage.removeItem(GUEST_CART_KEY);
     }
-    cartApi
-      .add(product._id, q)
-      .then((res) => {
-        if (res.success) {
-          dispatch({ type: 'LOAD_CART', payload: res.data });
-        }
-      })
-      .catch((error) => console.error('Failed to add to cart:', error));
+  }, [isAuthenticated]);
+
+  const addToCart = async (product: Product, quantity: number = 1): Promise<boolean> => {
+    const q = Math.max(1, Math.floor(quantity));
+    if (!isRegularUser) {
+      return false;
+    }
+    // Optimistic local update
+    dispatch({ type: 'ADD_TO_CART', payload: { product, quantity: q } });
+    try {
+      const res = await cartApi.add(product._id, q);
+      if (res.success && Array.isArray(res.data)) {
+        dispatch({ type: 'LOAD_CART', payload: res.data });
+      }
+      return true;
+    } catch (error) {
+      console.error('Failed to sync add to cart with backend:', error);
+      // Rollback: reload server state so UI reflects reality
+      await reloadServerCart(dispatch);
+      return false;
+    }
   };
 
   const removeFromCart = (productId: string) => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
-      return;
-    }
-    const snapshot = state.items;
+    // Optimistic local removal
     dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
+    if (!isRegularUser) return;
+
     cartApi
       .remove(productId)
       .then((res) => {
-        if (res.success) {
+        if (res.success && Array.isArray(res.data)) {
           dispatch({ type: 'LOAD_CART', payload: res.data });
         }
       })
-      .catch(() => {
-        dispatch({ type: 'LOAD_CART', payload: snapshot });
+      .catch((err) => {
+        console.error('Failed to remove from cart:', err);
+        // Rollback: reload server state
+        reloadServerCart(dispatch);
       });
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    const item = state.items.find((i) => i.product._id === productId);
+    const item = state.items.find(
+      (i) => i.product._id === productId || i.product.sku === productId
+    );
     if (!item) return;
 
     const next = clampCartQuantity(item.product, quantity);
     if (next === item.quantity) return;
 
-    if (!isAuthenticated) {
+    if (!isRegularUser) {
       if (next <= 0) {
         dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
       } else {
@@ -209,15 +235,17 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
-    const snapshot = state.items;
     if (next <= 0) {
       dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
       cartApi
         .remove(productId)
         .then((res) => {
-          if (res.success) dispatch({ type: 'LOAD_CART', payload: res.data });
+          if (res.success && Array.isArray(res.data)) dispatch({ type: 'LOAD_CART', payload: res.data });
         })
-        .catch(() => dispatch({ type: 'LOAD_CART', payload: snapshot }));
+        .catch((err) => {
+          console.error('Failed to remove item:', err);
+          reloadServerCart(dispatch);
+        });
       return;
     }
 
@@ -225,28 +253,30 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     cartApi
       .setQuantity(productId, next)
       .then((res) => {
-        if (res.success) {
+        if (res.success && Array.isArray(res.data)) {
           dispatch({ type: 'LOAD_CART', payload: res.data });
         }
       })
-      .catch(() => {
-        void reloadServerCart(dispatch);
+      .catch((err) => {
+        console.error('Failed to set quantity:', err);
+        reloadServerCart(dispatch);
       });
   };
 
   const clearCart = () => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'CLEAR_CART' });
-      return;
-    }
+    dispatch({ type: 'CLEAR_CART' });
+    if (!isRegularUser) return;
     cartApi
       .clear()
       .then((res) => {
-        if (res.success) {
+        if (res.success && Array.isArray(res.data)) {
           dispatch({ type: 'LOAD_CART', payload: res.data });
         }
       })
-      .catch((error) => console.error('Failed to clear cart:', error));
+      .catch((error) => {
+        console.error('Failed to clear cart:', error);
+        reloadServerCart(dispatch);
+      });
   };
 
   const isInCart = (productId: string) => {

@@ -57,7 +57,7 @@ const loadGoogleScript = () => {
 
 const getRedirectPath = (searchParams: URLSearchParams): string => {
   const r = searchParams.get('redirect');
-  if (!r || !r.startsWith('/') || r.startsWith('//')) return '/account';
+  if (!r || !r.startsWith('/') || r.startsWith('//')) return '/eshop/products';
   return r;
 };
 
@@ -169,15 +169,9 @@ const LoginPage: React.FC = () => {
   useEffect(() => {
     if (!googleButtonRef.current) return;
     if (googleRenderedRef.current) return;
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
-    if (!clientId) {
-      toast({
-        title: 'Google login unavailable',
-        description: 'Missing Google client ID configuration.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    const clientId =
+      (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ||
+      '568634545277-2nbbq573i3elvtod45uo77qvrm0np5p5.apps.googleusercontent.com';
     let cancelled = false;
     loadGoogleScript()
       .then(() => {

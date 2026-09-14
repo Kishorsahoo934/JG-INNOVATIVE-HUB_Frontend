@@ -1,12 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, LogIn, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LogoMark from '@/components/LogoMark';
+import { useAuth } from '../context/AuthContext';
+import { UserMenuDropdown } from './UserMenuDropdown';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -49,12 +52,22 @@ const Header = () => {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link to="/account">
-              <Button variant="default" size="sm" className="gap-2 rounded-full px-5">
-                <User className="w-4 h-4" />
-                My Account
+            <Link to="/eshop">
+              <Button size="sm" className="gap-2 rounded-full px-5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-0.5">
+                <ShoppingCart className="w-4 h-4" />
+                Explore Products
               </Button>
             </Link>
+            {isAuthenticated ? (
+              <UserMenuDropdown />
+            ) : (
+              <Link to="/login">
+                <Button variant="outline" size="sm" className="gap-2 rounded-full px-5 border-white/20 hover:bg-white/10 text-white bg-transparent">
+                  <LogIn className="w-4 h-4" />
+                  Login / Sign Up
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button - larger touch target */}
@@ -87,13 +100,32 @@ const Header = () => {
               ))}
               <div className="border-t border-white/10 my-2" />
               <Link
-                to="/account"
+                to="/eshop"
                 onClick={closeMobileMenu}
-                className="flex items-center gap-2 px-4 py-3.5 min-h-[44px] text-base font-medium text-gray-300 hover:bg-white/10 hover:text-white rounded-lg touch-manipulation"
+                className="flex items-center gap-2 px-4 py-3.5 min-h-[44px] text-base font-bold text-primary hover:bg-white/10 rounded-lg touch-manipulation"
               >
-                <User className="w-4 h-4" />
-                My Account
+                <ShoppingCart className="w-4 h-4" />
+                Explore E-Shop
               </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/account"
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-2 px-4 py-3.5 min-h-[44px] text-base font-medium text-gray-300 hover:bg-white/10 hover:text-white rounded-lg touch-manipulation"
+                >
+                  <User className="w-4 h-4" />
+                  {user?.name ? user.name.split(' ')[0] : 'My Account'}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-2 px-4 py-3.5 min-h-[44px] text-base font-medium text-gray-300 hover:bg-white/10 hover:text-white rounded-lg touch-manipulation"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login / Sign Up
+                </Link>
+              )}
             </nav>
           </div>
         )}

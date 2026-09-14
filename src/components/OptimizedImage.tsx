@@ -1,4 +1,5 @@
 import type { ImgHTMLAttributes } from 'react';
+import { PLACEHOLDER_IMAGE } from '@/constants/media';
 
 export interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'loading'> {
   /** Image URL (required) */
@@ -15,6 +16,8 @@ export interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageEle
   width?: number;
   /** Height in px (recommended for LCP/CLS); use with width */
   height?: number;
+  /** Fallback image URL when source fails to load */
+  fallbackSrc?: string;
   /** @deprecated use priority instead */
   loading?: 'lazy' | 'eager';
 }
@@ -31,10 +34,12 @@ const OptimizedImage = ({
   avifSrc,
   width,
   height,
+  fallbackSrc = PLACEHOLDER_IMAGE,
   loading: legacyLoading,
   decoding = 'async',
   fetchPriority,
   className,
+  onError,
   ...rest
 }: OptimizedImageProps) => {
   const isPriority = priority || legacyLoading === 'eager';
@@ -42,18 +47,28 @@ const OptimizedImage = ({
   const priorityHint = fetchPriority ?? (isPriority ? 'high' : 'low');
   const sizeProps = width != null && height != null ? { width, height } : {};
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.currentTarget;
+    if (target.src !== fallbackSrc && !target.src.endsWith(fallbackSrc)) {
+      target.onerror = null;
+      target.src = fallbackSrc;
+    }
+    if (onError) onError(e);
+  };
+
   if (avifSrc || webpSrc) {
     return (
       <picture>
         {avifSrc && <source srcSet={avifSrc} type="image/avif" />}
         {webpSrc && <source srcSet={webpSrc} type="image/webp" />}
         <img
-          src={src}
+          src={src || fallbackSrc}
           alt={alt}
           loading={loading}
           decoding={decoding}
-          fetchPriority={priorityHint}
+          fetchpriority={priorityHint as 'high' | 'low' | 'auto'}
           className={className}
+          onError={handleImageError}
           {...sizeProps}
           {...rest}
         />
@@ -63,12 +78,13 @@ const OptimizedImage = ({
 
   return (
     <img
-      src={src}
+      src={src || fallbackSrc}
       alt={alt}
       loading={loading}
       decoding={decoding}
-      fetchPriority={priorityHint}
+      fetchpriority={priorityHint as 'high' | 'low' | 'auto'}
       className={className}
+      onError={handleImageError}
       {...sizeProps}
       {...rest}
     />

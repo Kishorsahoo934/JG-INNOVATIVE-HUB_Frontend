@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Settings, Calendar, Clock, ArrowRight, Cpu, ShieldCheck, Wrench, LayoutGrid } from 'lucide-react';
+import { Zap, Settings, Calendar, Clock, ArrowRight, Cpu, ShieldCheck, Wrench, LayoutGrid, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
 import { workshopsApi, Workshop } from '@/services/api';
@@ -12,15 +12,17 @@ const offerings = [
     title: 'E-Shop for Components',
     description: 'Explore a vast catalog of high-quality electrical and electronic components for your projects.',
     path: '/eshop',
-    hoverColor: 'hover:border-green-500',
+    hoverColor: 'hover:border-emerald-500/70',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
     isExternal: false,
   },
   {
     icon: Settings,
     title: 'Project Kits',
-    description: 'Get everything you need in one kit. ',
+    description: 'Get everything you need in one kit.',
     path: '/project-kits',
-    hoverColor: 'hover:border-primary',
+    hoverColor: 'hover:border-primary/70',
+    image: 'https://images.unsplash.com/photo-1553406830-ef251367749c?auto=format&fit=crop&w=800&q=80',
     isExternal: false,
   },
   {
@@ -28,7 +30,8 @@ const offerings = [
     title: 'Product Development',
     description: 'Bespoke design, rapid prototyping, PCB routing, 3D printing and industrial manufacturing for custom engineering products.',
     path: '/product-development',
-    hoverColor: 'hover:border-blue-500',
+    hoverColor: 'hover:border-blue-500/70',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
     isExternal: false,
   },
 ];
@@ -130,9 +133,17 @@ const HomePage = () => {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 animate-fade-in italic">
             JG Innovative Hub Pvt. Ltd.
           </h1>
-          <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto mb-0 animate-fade-in px-4" style={{ animationDelay: '0.2s' }}>
+          <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto mb-6 animate-fade-in px-4" style={{ animationDelay: '0.2s' }}>
             Your all-in-one innovation platform for robotics, IoT, and embedded systems. We provide the tools, knowledge, and community to transform your ideas into real-world solutions.
           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <Link to="/eshop">
+              <Button size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg font-bold shadow-lg shadow-primary/20 gap-2 transition-all hover:scale-105 active:scale-95">
+                <ShoppingCart className="w-5 h-5" />
+                Explore Products
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Core Offerings - within the same video background */}
@@ -146,17 +157,39 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {offerings.map((offering, idx) => {
               const cardContent = (
-                <div className={`h-full bg-[#1a2332]/80 backdrop-blur-sm border-2 border-transparent rounded-xl p-6 transition-all duration-300 ${offering.hoverColor} hover:bg-[#1a2332]`}>
-                  <div className="flex flex-col items-center text-center h-full">
-                    <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/30 transition-colors">
+                <div className={`relative h-full min-h-[270px] rounded-2xl overflow-hidden border border-white/15 ${offering.hoverColor} transition-all duration-500 shadow-xl group hover:shadow-2xl`}>
+                  {/* Real Background Image */}
+                  <img
+                    src={offering.image}
+                    alt={offering.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== '/placeholder.svg' && !target.src.endsWith('/placeholder.svg')) {
+                        target.onerror = null;
+                        target.src = '/placeholder.svg';
+                      }
+                    }}
+                  />
+                  {/* Dark Gradient Overlay for High Contrast */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090d16] via-[#090d16]/85 to-[#090d16]/50 group-hover:via-[#090d16]/75 transition-colors duration-300" />
+                  
+                  {/* Card Body */}
+                  <div className="relative z-10 flex flex-col items-center text-center h-full p-6 sm:p-7">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/20 backdrop-blur-md border border-primary/30 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/30 transition-all duration-300 shadow-lg">
                       <offering.icon className="w-7 h-7 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-3">
+                    <h3 className="text-xl font-bold text-white mb-2.5 tracking-tight group-hover:text-primary transition-colors duration-300">
                       {offering.title}
                     </h3>
-                    <p className="text-sm text-gray-400 leading-relaxed flex-1">
+                    <p className="text-sm text-gray-300 leading-relaxed font-normal flex-1 max-w-sm">
                       {offering.description}
                     </p>
+                    <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+                      <span>Explore</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
                   </div>
                 </div>
               );

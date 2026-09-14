@@ -46,29 +46,46 @@ const wishlistReducer = (state: WishlistState, action: WishlistAction): Wishlist
   }
 };
 
+const reloadServerWishlist = async (dispatch: React.Dispatch<WishlistAction>) => {
+  try {
+    const res = await wishlistApi.get();
+    if (res.success) {
+      dispatch({ type: 'LOAD_WISHLIST', payload: res.data });
+    }
+  } catch {
+    /* keep optimistic state */
+  }
+};
+
 export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [state, dispatch] = useReducer(wishlistReducer, { items: [] });
+
+  // Skip wishlist for admin users
+  const isRegularUser = isAuthenticated && user?.role !== 'admin';
 
   // Load wishlist from backend on auth
   useEffect(() => {
     const loadWishlist = async () => {
-      if (!isAuthenticated) {
-        const raw = localStorage.getItem(GUEST_WISHLIST_KEY);
-        if (!raw) {
-          dispatch({ type: 'LOAD_WISHLIST', payload: [] });
-          return;
-        }
-        try {
-          const items = JSON.parse(raw) as Product[];
-          dispatch({ type: 'LOAD_WISHLIST', payload: Array.isArray(items) ? items : [] });
-        } catch {
-          localStorage.removeItem(GUEST_WISHLIST_KEY);
-          dispatch({ type: 'LOAD_WISHLIST', payload: [] });
-        }
+      if (!isRegularUser) {
+        localStorage.removeItem(GUEST_WISHLIST_KEY);
+        dispatch({ type: 'LOAD_WISHLIST', payload: [] });
         return;
       }
       try {
+        // Process any pending wishlist item stored before login redirect
+        const pendingRaw = sessionStorage.getItem('pendingWishlistItem');
+        if (pendingRaw) {
+          sessionStorage.removeItem('pendingWishlistItem');
+          try {
+            const { productId } = JSON.parse(pendingRaw);
+            if (productId) {
+              await wishlistApi.add(productId);
+            }
+          } catch {
+            /* ignore parse error */
+          }
+        }
         const res = await wishlistApi.get();
         if (res.success) {
           dispatch({ type: 'LOAD_WISHLIST', payload: res.data });
@@ -78,40 +95,55 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     };
     loadWishlist();
-  }, [isAuthenticated]);
+  }, [isRegularUser]);
 
   useEffect(() => {
-    if (isAuthenticated) return;
-    localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(state.items));
-  }, [state.items, isAuthenticated]);
+    if (!isAuthenticated) {
+      localStorage.removeItem(GUEST_WISHLIST_KEY);
+    }
+  }, [isAuthenticated]);
 
   const addToWishlist = (product: Product) => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'ADD_TO_WISHLIST', payload: product });
+    if (!isRegularUser) {
       return;
     }
+    // Optimistic update
+    dispatch({ type: 'ADD_TO_WISHLIST', payload: product });
     wishlistApi
       .add(product._id)
-      .then(() => dispatch({ type: 'ADD_TO_WISHLIST', payload: product }))
-      .catch((error) => console.error('Failed to add to wishlist:', error));
+      .then((res) => {
+        // Reload from server to stay in sync
+        if (res.success) {
+          reloadServerWishlist(dispatch);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to add to wishlist:', error);
+        // Rollback: reload server state
+        reloadServerWishlist(dispatch);
+      });
   };
 
   const removeFromWishlist = (productId: string) => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: productId });
-      return;
-    }
+    // Optimistic removal
+    dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: productId });
+    if (!isRegularUser) return;
+
     wishlistApi
       .remove(productId)
-      .then(() => dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: productId }))
-      .catch((error) => console.error('Failed to remove from wishlist:', error));
+      .then((res) => {
+        if (res.success) {
+          reloadServerWishlist(dispatch);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to remove from wishlist:', error);
+        // Rollback: reload server state
+        reloadServerWishlist(dispatch);
+      });
   };
 
   const clearWishlist = () => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'CLEAR_WISHLIST' });
-      return;
-    }
     dispatch({ type: 'CLEAR_WISHLIST' });
   };
 

@@ -6,6 +6,7 @@ import ProductCard from '../components/ProductCard';
 import SEO from '@/components/SEO';
 import { productsApi, reviewsApi, type Review } from '../services/api';
 import type { Product } from '../utils/products';
+import { useAuth } from '../context/AuthContext';
 import { slugify } from '../utils/products';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -29,6 +30,7 @@ import {
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
@@ -87,10 +89,12 @@ const ProductDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
+    if (!product) return;
+    let cancelled = false;
     const loadRelated = async () => {
-      if (!product) return;
       try {
         const res = await productsApi.getAll();
+        if (cancelled) return;
         if (res.success) {
           const list = res.data;
           setRelatedProducts(
@@ -103,6 +107,7 @@ const ProductDetailPage = () => {
       }
     };
     loadRelated();
+    return () => { cancelled = true; };
   }, [product]);
 
   const mediaItems = useMemo(() => {
@@ -225,7 +230,21 @@ const ProductDetailPage = () => {
   }
 
   if (!product) {
-    return null;
+    return (
+      <EShopLayout>
+        <SEO title="Product not found" description="This product is unavailable or may have been removed." path="/eshop/products" noIndex />
+        <div className="container mx-auto px-4 py-12 text-center max-w-xl">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Product Not Found</h1>
+          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6">
+            The item may have been removed or the link is outdated. Browse our E-Shop for microcontrollers, sensors, motors,
+            power supplies and IoT boards.
+          </p>
+          <Link to="/eshop/products" className="text-primary hover:underline font-medium inline-block min-h-[44px]">
+            View all products
+          </Link>
+        </div>
+      </EShopLayout>
+    );
   }
 
   const handleSearchChange = (value: string) => {
@@ -299,13 +318,27 @@ const ProductDetailPage = () => {
     return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join('');
   })();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.stock > 0 && quantity > product.stock) {
       toast({ title: 'Not enough stock', description: 'Please reduce the quantity.', variant: 'destructive' });
       return;
     }
-    addToCart(product, quantity);
-    toast({ title: 'Added to cart', description: `${quantity} × ${product.name}` });
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({ productId: product._id, quantity }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to add items to your cart.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/cart');
+      return;
+    }
+    const ok = await addToCart(product, quantity);
+    if (ok) {
+      toast({ title: 'Added to cart', description: `${quantity} × ${product.name}` });
+    } else {
+      toast({ title: 'Error', description: 'Could not add item to cart. Please try again.', variant: 'destructive' });
+    }
   };
 
   const handleBuyNow = () => {
@@ -318,6 +351,15 @@ const ProductDetailPage = () => {
       return;
     }
     sessionStorage.setItem('buyNowItem', JSON.stringify({ product, quantity }));
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to proceed with your order.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/checkout');
+      return;
+    }
     navigate('/checkout');
   };
 
@@ -327,6 +369,15 @@ const ProductDetailPage = () => {
       const res = await productsApi.getById(CONTACT_US_3D_SKU);
       if (res.success && res.data) {
         sessionStorage.setItem('buyNowItem', JSON.stringify({ product: res.data, quantity: 1 }));
+        if (!isAuthenticated) {
+          toast({
+            title: 'Login Required',
+            description: 'Please sign in to proceed with your order.',
+            variant: 'destructive',
+          });
+          navigate('/login?redirect=/checkout');
+          return;
+        }
         navigate('/checkout');
       } else {
         toast({ title: 'Error', description: 'Could not open checkout. Try again.', variant: 'destructive' });
@@ -339,6 +390,16 @@ const ProductDetailPage = () => {
   };
 
   const handleWishlistToggle = () => {
+    if (!isAuthenticated) {
+      sessionStorage.setItem('pendingWishlistItem', JSON.stringify({ productId: product._id }));
+      toast({
+        title: 'Login Required',
+        description: 'Please sign in to save items to your wishlist.',
+        variant: 'destructive',
+      });
+      navigate('/login?redirect=/wishlist');
+      return;
+    }
     if (inWishlist) {
       removeFromWishlist(product._id);
     } else {
@@ -436,6 +497,13 @@ const ProductDetailPage = () => {
                         loading={currentImageIndex === 0 ? 'eager' : 'lazy'}
                         decoding="async"
                         fetchPriority={currentImageIndex === 0 ? 'high' : undefined}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== PLACEHOLDER_IMAGE && !target.src.endsWith(PLACEHOLDER_IMAGE)) {
+                            target.onerror = null;
+                            target.src = PLACEHOLDER_IMAGE;
+                          }
+                        }}
                       />
                     );
                   }
@@ -501,7 +569,22 @@ const ProductDetailPage = () => {
                       }`}
                     >
                       {item.type === 'image' ? (
-                        <img src={item.url || PLACEHOLDER_IMAGE} alt={`${product.name} ${idx + 1}`} width={64} height={64} className="w-full h-full object-contain" loading="lazy" decoding="async" />
+                        <img
+                          src={item.url || PLACEHOLDER_IMAGE}
+                          alt={`${product.name} ${idx + 1}`}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src !== PLACEHOLDER_IMAGE && !target.src.endsWith(PLACEHOLDER_IMAGE)) {
+                              target.onerror = null;
+                              target.src = PLACEHOLDER_IMAGE;
+                            }
+                          }}
+                        />
                       ) : (
                         <span className="bg-muted flex items-center justify-center w-full h-full">
                           <Play className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />

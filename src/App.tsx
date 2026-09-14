@@ -53,11 +53,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageFallback() {
   return (
-    <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4" role="status" aria-live="polite">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4 bg-background" role="status" aria-live="polite">
       <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" aria-hidden />
-      <p className="text-sm text-muted-foreground text-center max-w-sm">
-        Loading JG Innovative Hub — robotics, IoT and electronics for students and makers.
-      </p>
     </div>
   );
 }
