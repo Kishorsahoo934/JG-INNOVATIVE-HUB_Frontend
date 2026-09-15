@@ -40,6 +40,7 @@ const TutorDirectoryPage = lazy(() => import("./pages/TutorDirectoryPage"));
 const TutorProfilePage = lazy(() => import("./pages/TutorProfilePage"));
 const TutorDashboardPage = lazy(() => import("./pages/TutorDashboardPage"));
 const ProductDevelopmentPage = lazy(() => import("./pages/ProductDevelopmentPage"));
+const DevelopedProductDetailPage = lazy(() => import("./pages/DevelopedProductDetailPage"));
 const WorkshopsPage = lazy(() => import("./pages/WorkshopsPage"));
 const WorkshopDetailPage = lazy(() => import("./pages/WorkshopDetailPage"));
 const InternshipsPage = lazy(() => import("./pages/InternshipsPage"));
@@ -102,6 +103,7 @@ const App = () => (
                   <Route path="/terms-conditions" element={<TermsConditionsPage />} />
                   <Route path="/gallery" element={<GalleryPage />} />
                   <Route path="/product-development" element={<ProductDevelopmentPage />} />
+                  <Route path="/product-development/:id" element={<DevelopedProductDetailPage />} />
                   <Route path="/project-kits" element={<ProjectsConsultancyPage />} />
                   <Route path="/project/:id" element={<ProjectDetailPage />} />
                   <Route path="/profile/:userId" element={<Layout><UserProfilePage /></Layout>} />

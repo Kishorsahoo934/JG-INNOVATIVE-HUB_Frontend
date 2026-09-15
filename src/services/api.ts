@@ -24,7 +24,7 @@ export const removeAuthToken = (): void => {
 };
 
 // Base fetch wrapper with auth
-const fetchWithAuth = async <T>(
+export const fetchWithAuth = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
@@ -254,6 +254,71 @@ export const productsApi = {
     }
     return { success: false, data: undefined as unknown as Product, message: 'Product not found' };
   },
+};
+
+// ============ DEVELOPED PRODUCTS API ============
+export interface DevelopedProduct {
+  _id: string;
+  name: string;
+  description: string;
+  longDescription: string;
+  tag: string;
+  category: string;
+  images: { url: string; publicId: string }[];
+  features: string[];
+  status: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const developedProductsApi = {
+  getAll: async (params?: {
+    category?: string;
+    search?: string;
+    status?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.set('category', params.category);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    const res = await fetchWithAuth<unknown>(`/api/developed-products${queryString}`);
+    return res as ApiResponse<DevelopedProduct[]>;
+  },
+
+  getById: async (id: string) => {
+    const res = await fetchWithAuth<unknown>(`/api/developed-products/${id}`);
+    return res as ApiResponse<DevelopedProduct>;
+  },
+};
+
+// ============ PRODUCT DEV CONTENT API ============
+export interface ProductDevContentItem {
+  _id: string;
+  type: 'process' | 'service' | 'faq' | 'feature';
+  title: string;
+  description: string;
+  icon?: string;
+  stepNumber?: string;
+  order: number;
+  isActive: boolean;
+}
+
+export const productDevContentApi = {
+  getAll: async (type?: string) => {
+    const query = type ? `?type=${type}` : '';
+    const res = await fetchWithAuth<unknown>(`/api/product-dev-content${query}`);
+    return res as ApiResponse<ProductDevContentItem[]>;
+  }
+};
+
+export const consultationApi = {
+  getMyConsultations: async () => {
+    const res = await fetchWithAuth<unknown>('/api/contact/consultation/my-bookings');
+    return res as ApiResponse<any[]>;
+  }
 };
 
 // ============ CATEGORIES API ============

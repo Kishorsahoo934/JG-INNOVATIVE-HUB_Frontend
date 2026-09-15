@@ -96,36 +96,44 @@ const ProjectsConsultancyPage = () => {
         description="Explore robotics kits to build your custom IoT, embedded systems, and automation projects."
         path="/project-kits"
       />
-      <div className="container mx-auto px-2 sm:px-4 pb-8 sm:pb-12">
-        {/* Breadcrumb */}
-        <nav
-          className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground mb-4 sm:mb-6"
-          aria-label="Breadcrumb"
-        >
-          <Link
-            to="/"
-            className="hover:text-foreground whitespace-nowrap min-h-[44px] inline-flex items-center px-1 -mx-1 rounded-md touch-manipulation"
-          >
-            Home
-          </Link>
-          <span className="text-muted-foreground/80" aria-hidden>
-            /
-          </span>
-          <span className="text-foreground font-medium min-h-[44px] inline-flex items-center">
-            Project Kits
-          </span>
-        </nav>
+      <div className="w-full relative bg-black/80 pb-8 sm:pb-12 mb-8 border-b border-border">
+        {/* Background Image */}
+        <div className="absolute inset-0 overflow-hidden">
+          <img src="/images/project-kit-bg.jpg" alt="Project Kits Background" className="w-full h-full object-cover opacity-30 object-center" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
+        </div>
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Project Kits</h1>
-            <p className="text-sm text-muted-foreground">
-              {isProjectsLoading
-                ? 'Loading…'
-                : `${projects.length} project kit${projects.length === 1 ? '' : 's'} found`}
+        <div className="container relative z-10 mx-auto px-4 pt-12 sm:pt-16">
+          {/* Breadcrumb */}
+          <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-white/70 mb-6" aria-label="Breadcrumb">
+            <Link to="/" className="hover:text-white whitespace-nowrap min-h-[44px] inline-flex items-center px-1 -mx-1 rounded-md touch-manipulation">
+              Home
+            </Link>
+            <span className="text-white/40" aria-hidden>/</span>
+            <span className="text-white font-medium min-h-[44px] inline-flex items-center">
+              Project Kits
+            </span>
+          </nav>
+
+          {/* Header Text */}
+          <div className="max-w-2xl">
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg">
+              Project Kits
+            </h1>
+            <p className="text-sm sm:text-base text-white/80 font-medium">
+              Hardware kits with all components included. Built for engineering students and DIY makers.
             </p>
           </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 pb-8 sm:pb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <p className="text-sm font-semibold text-muted-foreground">
+            {isProjectsLoading
+              ? 'Loading projects...'
+              : `${projects.length} project kit${projects.length === 1 ? '' : 's'} available`}
+          </p>
         </div>
 
         {/* Category Filter Pills */}
@@ -170,12 +178,12 @@ const ProjectsConsultancyPage = () => {
               >
                 <div className="relative aspect-square bg-secondary/30 overflow-hidden">
                   <img
-                    src={(project.images && project.images[0]) || PLACEHOLDER_IMAGE}
+                    src={(project.images && project.images[0]) || '/images/project-kit-bg.jpg'}
                     alt={project.name}
-                    className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
-                  <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
+                  <div className="absolute top-3 right-3 flex flex-col gap-2">
                     <Badge className="bg-primary/95 text-black border-none text-[9px] uppercase tracking-wider font-semibold">
                       {project.projectType === 'combo_components' ? 'Kit Combo' : 'Ready Made'}
                     </Badge>

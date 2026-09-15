@@ -12,7 +12,7 @@ interface EShopLayoutProps {
 
 const EShopLayout = ({ children, searchQuery, onSearchChange, hideSearch = false }: EShopLayoutProps) => {
   const location = useLocation();
-  const isProjectPage = location.pathname.startsWith('/project-kits') || location.pathname.startsWith('/project/');
+  const isProjectPage = location.pathname.startsWith('/project-kits') || location.pathname.startsWith('/project/') || location.pathname.startsWith('/product-development');
 
   const paddingClass = isProjectPage
     ? (hideSearch ? 'pt-16 sm:pt-20 lg:pt-24' : 'pt-28 sm:pt-32 lg:pt-24')
