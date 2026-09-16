@@ -13,7 +13,7 @@ const VerifyEmailPage = () => {
   const { toast } = useToast();
   const { refreshUser } = useAuth();
   const token = searchParams.get('token') || '';
-  const returnTo = searchParams.get('returnTo') || '/account';
+  const returnTo = searchParams.get('returnTo') || '/';
 
   const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const [message, setMessage] = useState('');
@@ -85,3 +85,4 @@ const VerifyEmailPage = () => {
 };
 
 export default VerifyEmailPage;
+
