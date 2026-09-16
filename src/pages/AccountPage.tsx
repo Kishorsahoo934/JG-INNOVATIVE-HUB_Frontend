@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { ordersApi, userApi, sessionsApi, Order, Address, SessionSlot } from '../services/api';
+import { ordersApi, userApi, sessionsApi, consultationApi, Order, Address, SessionSlot } from '../services/api';
 import { formatPrice } from '@/utils/price';
 import { normalizeIndianMobile10, isValidIndianMobile10 } from '@/utils/phone';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
@@ -49,6 +49,10 @@ const AccountPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   
+  // Consultations states
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [isLoadingConsultations, setIsLoadingConsultations] = useState(false);
+
   // Sessions states
   const [studentSessions, setStudentSessions] = useState<SessionSlot[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
@@ -160,28 +164,33 @@ const AccountPage = () => {
     };
   }, [isAuthenticated, user?.role]);
 
-  // Fetch booked sessions
+  // Fetch booked sessions and consultations
   useEffect(() => {
     let cancelled = false;
-    const fetchSessions = async () => {
+    const fetchData = async () => {
       if (!isAuthenticated || user?.role === 'admin') return;
       setIsLoadingSessions(true);
+      setIsLoadingConsultations(true);
       try {
-        const sessionRes = await sessionsApi.getStudentSessions();
-        if (!cancelled && sessionRes.success) {
-          setStudentSessions(sessionRes.data);
+        const [sessionRes, consultRes] = await Promise.all([
+          sessionsApi.getStudentSessions(),
+          consultationApi.getMyConsultations()
+        ]);
+        if (!cancelled) {
+          if (sessionRes.success) setStudentSessions(sessionRes.data);
+          if (consultRes.success) setConsultations(consultRes.data);
         }
       } catch (err) {
-        console.error('Failed to fetch student sessions:', err);
+        console.error('Failed to fetch sessions/consultations:', err);
       } finally {
-        if (!cancelled) setIsLoadingSessions(false);
+        if (!cancelled) {
+          setIsLoadingSessions(false);
+          setIsLoadingConsultations(false);
+        }
       }
     };
-    fetchSessions();
-
-    return () => {
-      cancelled = true;
-    };
+    fetchData();
+    return () => { cancelled = true; };
   }, [isAuthenticated, user?.role]);
 
   // Get wishlist products - wishlistItems is Product[]
@@ -467,6 +476,22 @@ const AccountPage = () => {
                   <div className="flex items-center gap-3">
                     <Calendar className="w-4.5 h-4.5" />
                     <span>My Sessions</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-60" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('consultations')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'consultations'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4.5 h-4.5" />
+                    <span>My Consultations</span>
                   </div>
                   <ChevronRight className="w-4 h-4 opacity-60" />
                 </button>
@@ -1130,6 +1155,57 @@ const AccountPage = () => {
             </TabsContent>
 
 
+
+            <TabsContent value="consultations" className="space-y-4">
+              <Card className="bg-card/60 backdrop-blur-sm border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    My Consultations
+                  </CardTitle>
+                  <CardDescription>Product development consultations you have booked.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingConsultations ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : consultations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground mb-4">No consultation bookings yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {consultations.map((consultation) => (
+                        <div key={consultation._id} className="p-4 rounded-xl border border-border bg-background">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                                <Clock className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-foreground">Project: {consultation.message.substring(0, 50)}...</h4>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
+                                  <span>{new Date(consultation.createdAt).toLocaleDateString()}</span>
+                                  <span className="hidden sm:inline">•</span>
+                                  <span>Paid: {formatPrice(consultation.amount)}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 self-start md:self-auto">
+                              <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 shadow-none border-none">
+                                Confirmed
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* My Booked Sessions Tab */}
             <TabsContent value="sessions" className="space-y-4">

@@ -405,15 +405,15 @@ const InternshipsPage = () => {
                         <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full w-fit block">
                           Category 1: Sponsored Stipend
                         </span>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-black">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
                           Paid Internship Program
                         </h2>
-                        <p className="text-sm text-black leading-relaxed text-justify">
+                        <p className="text-sm text-foreground leading-relaxed text-justify">
                           Work directly on our industry-grade firmware development, PCB design layouts, and control system routing for mobile robots at our Odisha R&D Center. Get mentorship from senior hardware engineers and earn a competitive monthly stipend.
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-black">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-foreground">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>Monthly salary / stipend from company</span>
@@ -422,7 +422,7 @@ const InternshipsPage = () => {
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>Industry-sponsored real product R&D</span>
                         </div>
-                        <div className="flex items-center gap-2 font-semibold text-black">
+                        <div className="flex items-center gap-2 font-semibold text-foreground">
                           <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                           <span>Eligibility: 3rd & 4th Year B.Tech/MCA/M.Sc students only</span>
                         </div>
@@ -453,8 +453,8 @@ const InternshipsPage = () => {
                     <span className="text-xs font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full w-fit mx-auto block">
                       Category 2: Research & Training
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-black">Self-Funded Research Internship</h2>
-                    <p className="text-sm text-black">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Self-Funded Research Internship</h2>
+                    <p className="text-sm text-foreground">
                       Gain hands-on experience, microcontroller component kits, and official engineering certifications. Open to 1st, 2nd, 3rd, and 4th Year students.
                     </p>
                   </div>
@@ -509,11 +509,11 @@ const InternshipsPage = () => {
                           <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-500/30 uppercase font-bold tracking-wider mb-2">
                             {tier.tagline}
                           </Badge>
-                          <h3 className="text-lg font-bold text-black leading-snug">{tier.duration}</h3>
+                          <h3 className="text-lg font-bold text-foreground leading-snug">{tier.duration}</h3>
                           <p className="text-3xl font-black text-primary font-mono mt-2">{tier.price}</p>
                         </div>
 
-                        <ul className="space-y-2 border-t border-border/20 pt-4 text-[11px] text-black leading-relaxed min-h-[140px]">
+                        <ul className="space-y-2 border-t border-border/20 pt-4 text-[11px] text-foreground leading-relaxed min-h-[140px]">
                           {tier.benefits.map((benefit, idx) => (
                             <li key={idx} className="flex items-start gap-2">
                               <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
@@ -527,7 +527,7 @@ const InternshipsPage = () => {
                         <Button
                           onClick={() => handleApplyClick('self-funded', tier.id as '1-month' | '45-days' | '2-month')}
                           variant="outline"
-                          className="w-full text-xs font-bold py-4 border-blue-500/30 hover:bg-blue-500 hover:text-black hover:border-blue-500 transition-colors shadow-sm"
+                          className="w-full text-xs font-bold py-4 border-blue-500/30 hover:bg-blue-500 hover:text-foreground hover:border-blue-500 transition-colors shadow-sm"
                         >
                           Apply Now ({tier.price})
                         </Button>
@@ -546,16 +546,16 @@ const InternshipsPage = () => {
                           variant="ghost" 
                           size="sm" 
                           onClick={() => setShowForm(false)}
-                          className="absolute top-4 right-4 text-xs text-black hover:text-black"
+                          className="absolute top-4 right-4 text-xs text-foreground hover:text-foreground"
                         >
                           Close Form
                         </Button>
                         <CardHeader>
-                          <CardTitle className="text-xl font-bold flex items-center gap-2 text-black">
+                          <CardTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
                             <Briefcase className="w-5 h-5 text-primary" />
                             Apply for {selectedCategory === 'paid' ? 'Paid Internship (Stipend)' : `Self-Funded Internship (${selectedTier === '1-month' ? '1 Month' : selectedTier === '45-days' ? '45 Days' : '2 Months'})`}
                           </CardTitle>
-                          <CardDescription className="text-black text-xs">
+                          <CardDescription className="text-foreground text-xs">
                             {selectedCategory === 'paid' 
                               ? 'This is a sponsored position. You will receive a stipend/salary from company. Restricted to 3rd & 4th Year B.Tech/MCA/M.Sc students only.'
                               : `Training tier fee: ${selectedTier === '1-month' ? '₹299' : selectedTier === '45-days' ? '₹399' : '₹499'} payable upon verification.`}
@@ -637,13 +637,13 @@ const InternshipsPage = () => {
                                 )}
                               </select>
                               {selectedCategory === 'paid' && (
-                                <p className="text-[10px] text-black font-medium">Note: Paid internships require active enrollment in 3rd or 4th year.</p>
+                                <p className="text-[10px] text-foreground font-medium">Note: Paid internships require active enrollment in 3rd or 4th year.</p>
                               )}
                             </div>
 
                             {/* Skills Input */}
                             <div className="space-y-1.5">
-                              <Label htmlFor="i-skills" className="flex items-center gap-1.5 text-xs font-semibold text-black">
+                              <Label htmlFor="i-skills" className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                                 <Code className="w-3.5 h-3.5 text-primary" /> Core Skills
                               </Label>
                               <Input
@@ -652,9 +652,9 @@ const InternshipsPage = () => {
                                 value={form.skills}
                                 onChange={(e) => setForm({ ...form, skills: e.target.value })}
                                 required
-                                className="bg-background/50 border-border rounded-lg text-sm text-black placeholder:text-slate-500"
+                                className="bg-background/50 border-border rounded-lg text-sm text-foreground placeholder:text-slate-500"
                               />
-                              <p className="text-[10px] text-black">
+                              <p className="text-[10px] text-foreground">
                                 Please type your core skills, separated by commas.
                               </p>
                             </div>
@@ -673,7 +673,7 @@ const InternshipsPage = () => {
                                 required
                                 className="bg-background/50 border-border rounded-lg text-sm text-foreground"
                               />
-                              <p className="text-[10px] text-black">
+                              <p className="text-[10px] text-foreground">
                                 Please upload your CV/Resume to Google Drive or Dropbox and paste the public link here.
                               </p>
                             </div>
@@ -687,7 +687,7 @@ const InternshipsPage = () => {
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {/* LinkedIn */}
                                 <div className="space-y-1">
-                                  <Label htmlFor="i-linkedin" className="text-[10px] text-black uppercase font-semibold">LinkedIn Profile</Label>
+                                  <Label htmlFor="i-linkedin" className="text-[10px] text-foreground uppercase font-semibold">LinkedIn Profile</Label>
                                   <Input
                                     id="i-linkedin"
                                     type="url"
@@ -700,7 +700,7 @@ const InternshipsPage = () => {
 
                                 {/* GitHub */}
                                 <div className="space-y-1">
-                                  <Label htmlFor="i-github" className="text-[10px] text-black uppercase font-semibold">GitHub Profile</Label>
+                                  <Label htmlFor="i-github" className="text-[10px] text-foreground uppercase font-semibold">GitHub Profile</Label>
                                   <Input
                                     id="i-github"
                                     type="url"
@@ -713,7 +713,7 @@ const InternshipsPage = () => {
 
                                 {/* Personal Portfolio */}
                                 <div className="space-y-1">
-                                  <Label htmlFor="i-portfolio" className="text-[10px] text-black uppercase font-semibold">Personal Portfolio</Label>
+                                  <Label htmlFor="i-portfolio" className="text-[10px] text-foreground uppercase font-semibold">Personal Portfolio</Label>
                                   <Input
                                     id="i-portfolio"
                                     type="url"
@@ -764,9 +764,9 @@ const InternshipsPage = () => {
               ) : myApplications.length === 0 ? (
                 <Card className="bg-card/40 border-border/60 py-16 text-center max-w-md mx-auto">
                   <CardContent className="space-y-3">
-                    <AlertCircle className="w-10 h-10 mx-auto text-black" />
+                    <AlertCircle className="w-10 h-10 mx-auto text-foreground" />
                     <h3 className="font-bold text-lg text-foreground">No applications found</h3>
-                    <p className="text-sm text-black">You haven't submitted any internship applications yet.</p>
+                    <p className="text-sm text-foreground">You haven't submitted any internship applications yet.</p>
                     <Button onClick={() => setActiveTab('details')} size="sm">Browse Internships</Button>
                   </CardContent>
                 </Card>
@@ -794,10 +794,10 @@ const InternshipsPage = () => {
                       </CardHeader>
                       <CardContent className="space-y-4 text-sm">
                         <div>
-                          <span className="text-[10px] text-black block mb-1.5 font-bold uppercase tracking-wider">Skills Selected:</span>
+                          <span className="text-[10px] text-muted-foreground block mb-1.5 font-bold uppercase tracking-wider">Skills Selected:</span>
                           <div className="flex flex-wrap gap-1.5">
                             {app.skills.map((skill, idx) => (
-                              <Badge key={idx} variant="secondary" className="bg-slate-900 border border-border/60 text-[10px] py-0 px-2.5">
+                              <Badge key={idx} variant="secondary" className="bg-primary/10 text-primary border-none text-[10px] py-0 px-2.5">
                                 {skill}
                               </Badge>
                             ))}
@@ -806,10 +806,8 @@ const InternshipsPage = () => {
 
                         {app.coverLetter && (
                           <div className="border-t border-border/40 pt-3">
-                            <span className="text-[10px] text-black block mb-1 font-bold uppercase tracking-wider">Cover Letter:</span>
-                            <p className="text-xs text-black leading-relaxed">
-                              {app.coverLetter}
-                            </p>
+                            <span className="text-[10px] text-muted-foreground block mb-1 font-bold uppercase tracking-wider">Cover Letter:</span>
+                            <p className="text-xs text-foreground bg-muted/30 p-2.5 rounded-lg border border-border/50">{app.coverLetter}</p>
                           </div>
                         )}
                       </CardContent>

@@ -26,13 +26,15 @@ const EShopHeader = ({ searchQuery = '', onSearchChange, hideSearch = false }: E
   const { categories } = useCategories();
   const { isAuthenticated, user } = useAuth();
 
-  const isProjectPage = location.pathname.startsWith('/project-kits') || location.pathname.startsWith('/project/');
+  const isProjectPage = location.pathname.startsWith('/project-kits') || location.pathname.startsWith('/project/') || location.pathname.startsWith('/product-development');
 
   const submitSearchToListing = () => {
     const q = searchQuery.trim();
     if (!q) return;
     if (location.pathname.startsWith('/project-kits') || location.pathname.startsWith('/project/')) {
       navigate(`/project-kits?search=${encodeURIComponent(q)}`);
+    } else if (location.pathname.startsWith('/product-development')) {
+      navigate(`/product-development?search=${encodeURIComponent(q)}`);
     } else {
       navigate(`/eshop/products?search=${encodeURIComponent(q)}`);
     }
