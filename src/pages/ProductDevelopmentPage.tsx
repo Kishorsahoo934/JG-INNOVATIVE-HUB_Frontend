@@ -159,12 +159,12 @@ const ProductDevelopmentPage = () => {
       }>('/api/contact/consultation/order', { method: 'POST' });
 
       const options = {
-        key: orderData.keyId,
-        amount: orderData.amount,
-        currency: orderData.currency,
+        key: orderData.data?.keyId,
+        amount: orderData.data?.amount,
+        currency: orderData.data?.currency,
         name: 'JG Innovative Hub',
         description: 'Consultation Booking Fee',
-        order_id: orderData.orderId,
+        order_id: orderData.data?.orderId,
         handler: async (response: any) => {
           try {
             // 2. Submit Form with Payment Details
