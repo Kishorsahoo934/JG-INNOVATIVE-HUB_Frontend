@@ -16,6 +16,7 @@ import AcademyLayout from "./components/AcademyLayout";
 import ScrollToTop from "./components/ScrollToTop";
 import HomePage from "./pages/HomePage";
 import EShopHomePage from "./pages/EShopHomePage";
+import RealtimeBoundary from "./components/RealtimeBoundary";
 
 // Route-level code splitting: lazy load pages for smaller initial bundle
 const ProductListingPage = lazy(() => import("./pages/ProductListingPage"));
@@ -64,8 +65,9 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
+    <RealtimeBoundary>
+      <TooltipProvider>
+        <AuthProvider>
         <CartProvider>
           <WishlistProvider>
             <Toaster />
@@ -113,8 +115,9 @@ const App = () => (
             </BrowserRouter>
           </WishlistProvider>
         </CartProvider>
-      </AuthProvider>
-    </TooltipProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </RealtimeBoundary>
   </QueryClientProvider>
 );
 

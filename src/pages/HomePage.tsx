@@ -22,7 +22,7 @@ const offerings = [
     description: 'Get everything you need in one kit.',
     path: '/project-kits',
     hoverColor: 'hover:border-primary/70',
-    image: 'https://images.unsplash.com/photo-1553406830-ef251367749c?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1620634415912-ec5aa1e89d0d?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     isExternal: false,
   },
   {
