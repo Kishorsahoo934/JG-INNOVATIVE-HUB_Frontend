@@ -1,5 +1,13 @@
 // API Service for connecting to external backend
-const RAW_API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5000');
+const PRODUCTION_API_URL = 'https://jg-innovative-hub-backend.onrender.com';
+const configuredApiUrl = typeof import.meta.env.VITE_API_URL === 'string'
+  ? import.meta.env.VITE_API_URL.trim()
+  : '';
+const RAW_API_URL = import.meta.env.DEV
+  ? ''
+  : configuredApiUrl && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/|$)/i.test(configuredApiUrl)
+    ? configuredApiUrl
+    : PRODUCTION_API_URL;
 const API_URL = RAW_API_URL.endsWith('/') ? RAW_API_URL.slice(0, -1) : RAW_API_URL;
 
 interface ApiResponse<T = unknown> {
