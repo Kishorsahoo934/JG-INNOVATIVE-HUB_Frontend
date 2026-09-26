@@ -102,7 +102,7 @@ const HomePage = () => {
         </div>
 
         {/* Scrolling Marquee Hiring Line */}
-        <div className="relative z-10 w-full bg-primary/10 border-y border-primary/20 py-3 overflow-hidden my-6 backdrop-blur-sm">
+        <div className="relative z-10 w-full bg-primary/10 border-y border-primary/20 py-3 overflow-hidden my-6 backdrop-blur-sm group cursor-pointer hover:bg-primary/20 transition-colors">
           <style>{`
             @keyframes marquee {
               0% { transform: translate3d(0, 0, 0); }
@@ -111,6 +111,9 @@ const HomePage = () => {
             .animate-marquee-slow {
               display: inline-flex;
               animation: marquee 25s linear infinite;
+            }
+            .group:hover .animate-marquee-slow {
+              animation-play-state: paused;
             }
           `}</style>
           <div className="animate-marquee-slow whitespace-nowrap flex gap-12 text-xs sm:text-sm font-semibold uppercase tracking-wider text-primary">

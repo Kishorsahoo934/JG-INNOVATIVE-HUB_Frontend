@@ -991,6 +991,17 @@ export const workshopsApi = {
 };
 
 // ============ INTERNSHIPS API ============
+
+export interface InternshipPost {
+  _id: string;
+  title: string;
+  description: string;
+  category: 'paid' | 'self-funded';
+  tier?: string;
+  skills: string[];
+  isActive: boolean;
+}
+
 export interface InternshipApplication {
   _id: string;
   studentId: string;
@@ -1018,6 +1029,10 @@ export interface InternshipApplication {
 }
 
 export const internshipsApi = {
+  getPosts: async (): Promise<ApiResponse<InternshipPost[]>> => {
+    return fetchWithAuth('/api/internships/posts');
+  },
+
   apply: async (data: Partial<InternshipApplication>) => {
     return fetchWithAuth<InternshipApplication>('/api/internships/apply', {
       method: 'POST',

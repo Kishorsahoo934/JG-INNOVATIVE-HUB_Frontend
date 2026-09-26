@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { internshipsApi, InternshipApplication } from '../services/api';
+import { internshipsApi, InternshipApplication, InternshipPost } from '../services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,6 +68,24 @@ const InternshipsPage = () => {
     }, 100);
   };
   
+  
+  const [posts, setPosts] = useState<InternshipPost[]>([]);
+  useEffect(() => {
+    const fetchPosts = async () => {
+            try {
+        const res = await internshipsApi.getPosts();
+        if (res.success) {
+          setPosts(res.data);
+        } else {
+          setPosts((res as any).data || []);
+        }
+      } catch (err) {}
+    };
+    fetchPosts();
+  }, []);
+  
+  const paidPosts = posts.filter(p => p.category === 'paid');
+  const selfFundedPosts = posts.filter(p => p.category === 'self-funded');
   const [myApplications, setMyApplications] = useState<InternshipApplication[]>([]);
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -380,18 +398,59 @@ const InternshipsPage = () => {
                       </div>
                     </div>
 
-                    <div className="md:col-span-4 flex justify-center md:justify-end">
-                      <Button 
-                        onClick={() => handleApplyClick('paid')}
-                        className="w-full sm:w-auto font-bold px-8 py-6 rounded-xl gap-2 text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all"
-                      >
-                        Apply for Paid Intern
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </div>
+
+
                   </div>
                 </div>
-              </ScrollReveal>
+                </ScrollReveal>
+
+                {/* DYNAMIC PAID POSTS - RENDERED OUTSIDE THE DESCRIPTION CARD */}
+                {paidPosts.length > 0 && (
+                  <ScrollReveal delay={100}>
+                    <div className="mt-8 mb-4">
+                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
+                        <Briefcase className="w-5 h-5 text-primary" />
+                        Available Paid Positions
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {paidPosts.map(post => (
+                          <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-primary/50 transition-colors flex flex-col h-full">
+                            <h3 className="font-bold text-primary mb-2 text-lg">{post.title}</h3>
+                            <p className="text-sm text-foreground/80 mb-4 flex-grow">{post.description}</p>
+                            
+                            {post.skills && post.skills.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-5">
+                                {post.skills.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
+                              </div>
+                            )}
+                            
+                            <Button 
+                              onClick={() => handleApplyClick('paid')} 
+                              className="w-full font-bold gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
+                              variant="default"
+                            >
+                              Apply Now
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                )}
+
+                {/* GENERAL APPLY BUTTON (Fallback if no posts or just general application) */}
+                {paidPosts.length === 0 && (
+                  <div className="flex justify-start mt-4">
+                    <Button 
+                      onClick={() => handleApplyClick('paid')}
+                      className="w-full sm:w-auto font-bold px-8 py-6 rounded-xl gap-2 text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all"
+                    >
+                      Apply for Paid Intern (General)
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
 
               {/* Self-Funded Internship Section */}
               <div className="space-y-8">
@@ -407,7 +466,40 @@ const InternshipsPage = () => {
                   </div>
                 </ScrollReveal>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                  {selfFundedPosts.length > 0 && (
+                    <div className="mb-8 mt-6">
+                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
+                        <Briefcase className="w-5 h-5 text-blue-500" />
+                        Available Self-Funded Positions
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {selfFundedPosts.map(post => (
+                          <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-blue-500/50 transition-colors flex flex-col h-full">
+                            <h3 className="font-bold text-blue-500 mb-2 text-lg">{post.title}</h3>
+                            <Badge variant="outline" className="mb-3 text-[10px] border-blue-500/20 text-blue-500 w-fit">{post.tier || 'Any Tier'}</Badge>
+                            <p className="text-sm text-foreground/80 mb-4 flex-grow">{post.description}</p>
+                            
+                            {post.skills && post.skills.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-5">
+                                {post.skills.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
+                              </div>
+                            )}
+                            
+                            <Button 
+                              onClick={() => handleApplyClick('self-funded', post.tier as any)} 
+                              className="w-full font-bold gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white"
+                              variant="outline"
+                            >
+                              Apply Now
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
                     {
                       id: '1-month',
