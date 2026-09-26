@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { ordersApi, userApi, sessionsApi, consultationApi, Order, Address, SessionSlot } from '../services/api';
+import { ordersApi, userApi, sessionsApi, consultationApi, workshopsApi, internshipsApi, Order, Address, SessionSlot, Workshop, InternshipApplication } from '../services/api';
 import { formatPrice } from '@/utils/price';
 import { normalizeIndianMobile10, isValidIndianMobile10 } from '@/utils/phone';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
@@ -44,6 +44,35 @@ const AccountPage = () => {
   const hasAppliedReturnToRef = useRef(false);
   const { addToCart } = useCart();
   const { items: wishlistItems, removeFromWishlist } = useWishlist();
+
+
+  const [enrolledWorkshops, setEnrolledWorkshops] = useState<Workshop[]>([]);
+  const [internshipApplications, setInternshipApplications] = useState<InternshipApplication[]>([]);
+  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadEnrollments = async () => {
+      setIsLoadingEnrollments(true);
+      try {
+        const [workshopResult, internshipResult] = await Promise.all([
+          workshopsApi.getEnrolled(),
+          internshipsApi.getMyApplications(),
+        ]);
+        if (cancelled) return;
+        if (workshopResult.success) setEnrolledWorkshops(workshopResult.data);
+        if (internshipResult.success) setInternshipApplications(internshipResult.data);
+      } catch (err) {
+        if (!cancelled) console.error('Failed to load enrollments:', err);
+      } finally {
+        if (!cancelled) setIsLoadingEnrollments(false);
+      }
+    };
+    if (user) {
+      loadEnrollments();
+    }
+    return () => { cancelled = true; };
+  }, [user]);
 
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -101,7 +130,7 @@ const AccountPage = () => {
   }, [user]);
 
   useEffect(() => {
-    const allowed = ['orders', 'wishlist', 'settings', 'addresses', 'logout', 'sessions'] as const;
+    const allowed = ['orders', 'wishlist', 'enrollments', 'settings', 'addresses', 'logout', 'sessions'] as const;
     if (tabParam && (allowed as readonly string[]).includes(tabParam)) {
       setActiveTab(tabParam);
     }
@@ -306,6 +335,14 @@ const AccountPage = () => {
   };
 
   // Get stable id for an address (backend may use _id or id)
+
+  const formatDate = (dateStr: string) => {
+    return new Intl.DateTimeFormat('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(new Date(dateStr));
+  };
   const getAddressId = (addr: Address) => String((addr as Address & { id?: string })._id ?? (addr as Address & { id?: string }).id ?? '');
 
   // Handle address delete
@@ -491,7 +528,7 @@ const AccountPage = () => {
                 >
                   <div className="flex items-center gap-3">
                     <Clock className="w-4.5 h-4.5" />
-                    <span>My Consultations</span>
+                    <span>My Product Development</span>
                   </div>
                   <ChevronRight className="w-4 h-4 opacity-60" />
                 </button>
@@ -515,6 +552,22 @@ const AccountPage = () => {
                     </Badge>
                   )}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('enrollments')}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === 'enrollments'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <GraduationCap className="w-4.5 h-4.5" />
+                    <span>My Enrollments</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-60" />
+                </button>
+
 
                 <button
                   type="button"
@@ -739,6 +792,69 @@ const AccountPage = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+            {/* Enrollments Tab */}
+            <TabsContent value="enrollments" className="space-y-6">
+              <Card className="bg-card/60 backdrop-blur-sm border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    My Workshop Enrollments
+                  </CardTitle>
+                  <CardDescription>Track the workshops you are enrolled in</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {isLoadingEnrollments ? (
+                      <p className="text-sm text-muted-foreground">Loading enrollments...</p>
+                    ) : enrolledWorkshops.length === 0 ? (
+                      <p className="text-sm text-muted-foreground border border-dashed rounded-xl p-6 text-center">You have not enrolled in any workshops yet.</p>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {enrolledWorkshops.map((workshop) => (
+                          <Link key={workshop._id} to={`/workshop/${workshop._id}`} className="block rounded-xl border border-border p-4 hover:border-primary/50 transition-colors">
+                            <p className="font-semibold text-sm">{workshop.title}</p>
+                            <p className="text-xs text-muted-foreground mt-2">{formatDate(workshop.date)} • {workshop.time}</p>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/60 backdrop-blur-sm border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                    My Internship Applications
+                  </CardTitle>
+                  <CardDescription>View the status of your internship applications</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {isLoadingEnrollments ? (
+                      <p className="text-sm text-muted-foreground">Loading applications...</p>
+                    ) : internshipApplications.length === 0 ? (
+                      <p className="text-sm text-muted-foreground border border-dashed rounded-xl p-6 text-center">You have not submitted an internship application yet.</p>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {internshipApplications.map((application) => (
+                          <div key={application._id} className="rounded-xl border border-border p-4">
+                            <p className="font-semibold text-sm capitalize">{application.category || 'Internship'} application</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-muted-foreground">Status:</span>
+                              <Badge variant="secondary" className="capitalize text-[10px] px-1.5 py-0">{application.status.replace('-', ' ')}</Badge>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-2">Submitted: {formatDate(application.createdAt)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
 
             {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-4">
@@ -1156,14 +1272,15 @@ const AccountPage = () => {
 
 
 
+            
             <TabsContent value="consultations" className="space-y-4">
               <Card className="bg-card/60 backdrop-blur-sm border-border">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-primary" />
-                    My Consultations
+                    My Product Development
                   </CardTitle>
-                  <CardDescription>Product development consultations you have booked.</CardDescription>
+                  <CardDescription>Track the progress of your product development projects.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isLoadingConsultations ? (
@@ -1173,39 +1290,65 @@ const AccountPage = () => {
                   ) : consultations.length === 0 ? (
                     <div className="text-center py-12">
                       <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-4">No consultation bookings yet</p>
+                      <p className="text-muted-foreground mb-4">No product development projects yet</p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {consultations.map((consultation) => (
-                        <div key={consultation._id} className="p-4 rounded-xl border border-border bg-background">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                                <Clock className="w-6 h-6" />
-                              </div>
-                              <div>
-                                <h4 className="font-semibold text-foreground">Project: {consultation.message.substring(0, 50)}...</h4>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
-                                  <span>{new Date(consultation.createdAt).toLocaleDateString()}</span>
-                                  <span className="hidden sm:inline">•</span>
-                                  <span>Paid: {formatPrice(consultation.amount)}</span>
-                                </div>
-                              </div>
+                    <div className="space-y-6">
+                      {consultations.map((consultation: any) => {
+                        const stages = ['Idea Submitted', 'Requirement Discussion', 'Project Confirmation', 'Design & Development', 'Testing & Delivery', 'Completed'];
+                        const currentStageIndex = stages.indexOf(consultation.processStage || 'Idea Submitted');
+                        
+                        return (
+                        <div key={consultation._id} className="p-6 rounded-xl border border-border bg-background shadow-sm">
+                          <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                            <div>
+                              <h4 className="font-bold text-lg text-foreground">{consultation.productName || 'Product Idea'}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">Category: {consultation.productCategory || 'N/A'}</p>
                             </div>
-                            <div className="flex items-center gap-2 self-start md:self-auto">
-                              <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 shadow-none border-none">
-                                Confirmed
+                            <div className="text-right">
+                              <Badge className="bg-primary/10 text-primary shadow-none border-none">
+                                {consultation.processStage || 'Idea Submitted'}
                               </Badge>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Submitted: {new Date(consultation.createdAt).toLocaleDateString()}
+                              </p>
                             </div>
                           </div>
+                          
+                          {/* Progress Tracker */}
+                          <div className="relative mt-8 mb-4 px-2">
+                            <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2 rounded-full overflow-hidden">
+                               <div 
+                                 className="h-full bg-primary transition-all duration-500 ease-in-out"
+                                 style={{ width: `${(currentStageIndex / (stages.length - 1)) * 100}%` }}
+                               />
+                            </div>
+                            <div className="relative flex justify-between">
+                              {stages.map((stage, idx) => {
+                                const isCompleted = idx <= currentStageIndex;
+                                const isActive = idx === currentStageIndex;
+                                return (
+                                  <div key={stage} className="flex flex-col items-center">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold z-10 transition-colors duration-300 ${isCompleted ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground border-2 border-background'}`}>
+                                      {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                                    </div>
+                                    <span className={`text-[10px] sm:text-xs mt-2 font-medium text-center hidden sm:block w-20 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                                      {stage}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          
                         </div>
-                      ))}
+                      )})}
                     </div>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
+
 
             {/* My Booked Sessions Tab */}
             <TabsContent value="sessions" className="space-y-4">

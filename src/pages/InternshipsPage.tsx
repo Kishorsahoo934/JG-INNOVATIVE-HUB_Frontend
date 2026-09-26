@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   Briefcase, Cpu, Layers, Code, FileText, Link2, 
@@ -35,7 +35,6 @@ const SKILL_OPTIONS = [
 
 const InternshipsPage = () => {
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'details' | 'my-applications'>('details');
@@ -44,6 +43,11 @@ const InternshipsPage = () => {
   const [showForm, setShowForm] = useState(false);
 
   const handleApplyClick = (category: 'paid' | 'self-funded', tier?: '1-month' | '45-days' | '2-month') => {
+    if (!isAuthenticated) {
+      toast.error('Please log in before applying for an internship.');
+      navigate('/login?redirect=/internships');
+      return;
+    }
     setSelectedCategory(category);
     if (category === 'self-funded' && tier) {
       setSelectedTier(tier);
@@ -152,52 +156,32 @@ const InternshipsPage = () => {
     e.preventDefault();
 
     if (!isAuthenticated) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to submit your internship application.',
-        variant: 'destructive'
-      });
+      toast.error('Please log in to submit your internship application.');
       navigate('/login?redirect=/internships');
       return;
     }
 
     // Validation
     if (!form.name.trim() || !form.email.trim() || !form.mobile.trim() || !form.resumeUrl.trim()) {
-      toast({
-        title: 'Required Fields Missing',
-        description: 'Please fill out all mandatory fields (Name, Email, Mobile, Resume URL).',
-        variant: 'destructive'
-      });
+      toast.error('Please fill out all mandatory fields (Name, Email, Mobile, Resume URL).');
       return;
     }
 
     const parsedSkills = form.skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
     if (parsedSkills.length === 0) {
-      toast({
-        title: 'Skills Required',
-        description: 'Please enter at least one skill.',
-        variant: 'destructive'
-      });
+      toast.error('Please enter at least one skill.');
       return;
     }
 
     if (!/^https?:\/\/.+/.test(form.resumeUrl.trim())) {
-      toast({
-        title: 'Invalid Resume Link',
-        description: 'Resume link must be a valid URL (Google Drive, Dropbox, etc.) starting with http:// or https://',
-        variant: 'destructive'
-      });
+      toast.error('Resume link must be a valid URL starting with http:// or https://');
       return;
     }
 
     // Validation specific to category
     if (selectedCategory === 'paid') {
       if (form.yearOfStudy !== '3rd-year' && form.yearOfStudy !== '4th-year') {
-        toast({
-          title: 'Stipend Application Restrained',
-          description: 'Paid internships are restricted to 3rd year & 4th year students only.',
-          variant: 'destructive'
-        });
+        toast.error('Paid internships are restricted to 3rd year & 4th year students only.');
         return;
       }
     }
@@ -234,7 +218,7 @@ const InternshipsPage = () => {
                 mobile: form.mobile.trim(),
                 skills: parsedSkills,
                 resumeUrl: form.resumeUrl.trim(),
-                coverLetter: form.coverLetter.trim() || `Self-funded internship application.`,
+                coverLetter: form.coverLetter.trim() || 'Self-funded internship application.',
                 githubUrl: form.githubUrl.trim() || undefined,
                 linkedinUrl: form.linkedinUrl.trim() || undefined,
                 personalPortfolioUrl: form.personalPortfolioUrl.trim() || undefined,
@@ -248,10 +232,7 @@ const InternshipsPage = () => {
 
               const res = await internshipsApi.apply(payload);
               if (res.success) {
-                toast({
-                  title: 'Application & Payment Successful!',
-                  description: 'Your self-funded internship application has been successfully recorded.'
-                });
+                toast.success('Your self-funded internship application has been successfully recorded.');
                 // Reset form
                 setForm(prev => ({
                   ...prev,
@@ -264,64 +245,52 @@ const InternshipsPage = () => {
                   yearOfStudy: '3rd-year'
                 }));
                 setShowForm(false);
-                await fetchMyApplications();
-                setActiveTab('my-applications');
+                toast.success('You can view this application in your user profile.');
+                fetchMyApplications();
               }
             } catch (err: unknown) {
-              toast({
-                title: 'Verification Failed',
-                description: err instanceof Error && err.message ? err.message : 'Verification of application failed. Contact support with payment ID.',
-                variant: 'destructive'
-              });
+              toast.error(err instanceof Error && err.message ? err.message : 'Verification of application failed.');
             } finally {
               setIsSubmitting(false);
             }
           },
           modal: {
             ondismiss: () => {
-              toast({
-                title: 'Payment Dismissed',
-                description: 'You closed the payment popup. The application has not been submitted.',
-                variant: 'destructive'
-              });
+              toast.error('You closed the payment popup. The application has not been submitted.');
               setIsSubmitting(false);
             }
           }
         };
 
-        const rzp = new ((window as unknown as { Razorpay: new (o: typeof options) => { open: () => void } }).Razorpay)(options);
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (response: any) {
+          toast.error(response.error.description || 'Payment Failed');
+        });
         rzp.open();
       } catch (err: unknown) {
-        toast({
-          title: 'Payment Order Failed',
-          description: err instanceof Error && err.message ? err.message : 'Could not initiate payment order. Please try again.',
-          variant: 'destructive'
-        });
+        toast.error(err instanceof Error && err.message ? err.message : 'Could not initiate payment order. Please try again.');
         setIsSubmitting(false);
       }
     } else {
-      // Paid internship - directly submit
-      const payload = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        mobile: form.mobile.trim(),
-        skills: parsedSkills,
-        resumeUrl: form.resumeUrl.trim(),
-        coverLetter: form.coverLetter.trim() || `Paid internship application.`,
-        githubUrl: form.githubUrl.trim() || undefined,
-        linkedinUrl: form.linkedinUrl.trim() || undefined,
-        personalPortfolioUrl: form.personalPortfolioUrl.trim() || undefined,
-        category: selectedCategory,
-        yearOfStudy: form.yearOfStudy
-      };
-
+      // Paid Internship flow
       try {
+        const payload = {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          mobile: form.mobile.trim(),
+          skills: parsedSkills,
+          resumeUrl: form.resumeUrl.trim(),
+          coverLetter: form.coverLetter.trim() || 'Paid internship application.',
+          githubUrl: form.githubUrl.trim() || undefined,
+          linkedinUrl: form.linkedinUrl.trim() || undefined,
+          personalPortfolioUrl: form.personalPortfolioUrl.trim() || undefined,
+          category: selectedCategory,
+          yearOfStudy: form.yearOfStudy
+        };
+
         const res = await internshipsApi.apply(payload);
         if (res.success) {
-          toast({
-            title: 'Application Submitted!',
-            description: 'Your internship application has been successfully recorded.'
-          });
+          toast.success('Your internship application has been successfully recorded.');
           // Reset form
           setForm(prev => ({
             ...prev,
@@ -334,15 +303,11 @@ const InternshipsPage = () => {
             yearOfStudy: '3rd-year'
           }));
           setShowForm(false);
-          await fetchMyApplications();
-          setActiveTab('my-applications');
+          toast.success('You can view this application in your user profile.');
+          fetchMyApplications();
         }
       } catch (err: unknown) {
-        toast({
-          title: 'Application Failed',
-          description: err instanceof Error && err.message ? err.message : 'Something went wrong during submission.',
-          variant: 'destructive'
-        });
+        toast.error(err instanceof Error && err.message ? err.message : 'Something went wrong during submission.');
       } finally {
         setIsSubmitting(false);
       }
@@ -375,24 +340,6 @@ const InternshipsPage = () => {
       <div className="network-bg min-h-screen py-10 sm:py-16 md:py-20 text-foreground">
         <div className="container mx-auto px-4 max-w-6xl">
           
-          {/* Main Tabs switcher */}
-          <div className="flex justify-center mb-8">
-            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'details' | 'my-applications')} className="w-full max-w-xs">
-              <TabsList className="bg-[#0c121e] border border-border/60 p-1 w-full grid grid-cols-2">
-                <TabsTrigger value="details" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold text-xs py-2">
-                  Internships
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="my-applications" 
-                  disabled={!isAuthenticated}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold text-xs py-2"
-                >
-                  My Applications ({myApplications.length})
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
           {activeTab === 'details' ? (
             <div className="space-y-12">
               {/* Paid Internship Section */}

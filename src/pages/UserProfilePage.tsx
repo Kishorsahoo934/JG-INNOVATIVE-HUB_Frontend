@@ -5,7 +5,7 @@ import {
   Globe, Edit3, Save, X, Upload, ArrowLeft, Calendar, Sparkles, Mail, Phone
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { publicProfileApi, userApi, User } from '../services/api';
+import { internshipsApi, publicProfileApi, userApi, User, type InternshipApplication, type Workshop, workshopsApi } from '../services/api';
 import { toast } from 'sonner';
 
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80";
@@ -18,6 +18,9 @@ const UserProfilePage: React.FC = () => {
 
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [enrolledWorkshops, setEnrolledWorkshops] = useState<Workshop[]>([]);
+  const [internshipApplications, setInternshipApplications] = useState<InternshipApplication[]>([]);
+  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
   
   // Edit Profile State
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -45,6 +48,35 @@ const UserProfilePage: React.FC = () => {
       fetchProfileData();
     }
   }, [userId]);
+
+  // Enrollment records are private: only the signed-in owner can request them.
+  useEffect(() => {
+    if (!isSelf || !currentUser) {
+      setEnrolledWorkshops([]);
+      setInternshipApplications([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadEnrollments = async () => {
+      setIsLoadingEnrollments(true);
+      try {
+        const [workshopResult, internshipResult] = await Promise.all([
+          workshopsApi.getEnrolled(),
+          internshipsApi.getMyApplications(),
+        ]);
+        if (cancelled) return;
+        if (workshopResult.success) setEnrolledWorkshops(workshopResult.data);
+        if (internshipResult.success) setInternshipApplications(internshipResult.data);
+      } catch (err) {
+        if (!cancelled) console.error('Failed to load private enrollment data:', err);
+      } finally {
+        if (!cancelled) setIsLoadingEnrollments(false);
+      }
+    };
+    void loadEnrollments();
+    return () => { cancelled = true; };
+  }, [isSelf, currentUser]);
 
   const fetchProfileData = async () => {
     setIsLoading(true);
@@ -289,6 +321,7 @@ const UserProfilePage: React.FC = () => {
 
         {/* Private Contact info */}
         {isSelf && (
+          <>
           <div className="bg-card/60 border border-border/80 rounded-2xl p-6 shadow-lg max-w-md mx-auto space-y-4">
             <h3 className="text-xs font-bold text-foreground uppercase tracking-wide">Private Account Info</h3>
             <div className="space-y-2.5 border-t border-border pt-3 text-xs text-muted-foreground">
@@ -305,6 +338,31 @@ const UserProfilePage: React.FC = () => {
               <p className="text-[10px] text-muted-foreground mt-2 italic">This section is private to you. Other makers only see your public socials and education.</p>
             </div>
           </div>
+          <section className="mt-8 grid gap-6 lg:grid-cols-2">
+            <div className="bg-card/60 border border-border/80 rounded-2xl p-5 shadow-lg">
+              <h2 className="text-base font-bold flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> My Workshop Enrollments</h2>
+              <div className="mt-4 space-y-3">
+                {isLoadingEnrollments ? <p className="text-sm text-muted-foreground">Loading enrollments…</p> : enrolledWorkshops.length === 0 ? <p className="text-sm text-muted-foreground">You have not enrolled in any workshops yet.</p> : enrolledWorkshops.map((workshop) => (
+                  <Link key={workshop._id} to={`/workshop/${workshop._id}`} className="block rounded-xl border border-border p-3 hover:border-primary/50 transition-colors">
+                    <p className="font-semibold text-sm">{workshop.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatDate(workshop.date)} · {workshop.time}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="bg-card/60 border border-border/80 rounded-2xl p-5 shadow-lg">
+              <h2 className="text-base font-bold flex items-center gap-2"><GraduationCap className="w-4 h-4 text-primary" /> My Internship Applications</h2>
+              <div className="mt-4 space-y-3">
+                {isLoadingEnrollments ? <p className="text-sm text-muted-foreground">Loading applications…</p> : internshipApplications.length === 0 ? <p className="text-sm text-muted-foreground">You have not submitted an internship application yet.</p> : internshipApplications.map((application) => (
+                  <div key={application._id} className="rounded-xl border border-border p-3">
+                    <p className="font-semibold text-sm capitalize">{application.category || 'Internship'} application</p>
+                    <p className="text-xs text-muted-foreground mt-1">Status: <span className="capitalize">{application.status.replace('-', ' ')}</span> · Submitted {formatDate(application.createdAt)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+          </>
         )}
 
       </div>
