@@ -4,6 +4,7 @@ import { Zap, Settings, Calendar, Clock, ArrowRight, Cpu, ShieldCheck, Wrench, L
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
 import { workshopsApi, Workshop } from '@/services/api';
+import { useFreshData } from '@/hooks/useFreshData';
 import ScrollReveal from '@/components/ScrollReveal';
 
 const offerings = [
@@ -40,23 +41,19 @@ const HomePage = () => {
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchWorkshops = async () => {
-      try {
-        const res = await workshopsApi.getAll({ homepage: true });
-        if (res.success) {
-          // Sort by date ascending (soonest first)
-          const sorted = [...res.data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          setWorkshops(sorted.slice(0, 3));
-        }
-      } catch (err) {
-        console.error('Failed to fetch workshops:', err);
-      } finally {
-        setIsLoading(false);
+  useFreshData(async () => {
+    try {
+      const res = await workshopsApi.getAll({ homepage: true });
+      if (res.success) {
+        const sorted = [...res.data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setWorkshops(sorted.slice(0, 3));
       }
-    };
-    fetchWorkshops();
-  }, []);
+    } catch (err) {
+      console.error('Failed to fetch workshops:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  });
 
   const homePageJsonLd = JSON.stringify({
     '@context': 'https://schema.org',

@@ -54,9 +54,26 @@ const ProductDevelopmentPage = () => {
   const [services, setServices] = useState<ProductDevContentItem[]>([]);
   const [faqs, setFaqs] = useState<ProductDevContentItem[]>([]);
 
+
   // Form State
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    company: '',
+    email: '', 
+    phone: '', 
+    productName: '',
+    productCategory: 'IoT',
+    currentStage: 'Idea',
+    estimatedBudget: '₹50,000 - ₹5,00,000',
+    expectedTimeline: '',
+    problemStatement: '',
+    detailedDescription: '',
+    agreedToTerms: false
+  });
+  const [documents, setDocuments] = useState<File[]>([]);
+  const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   useEffect(() => setSearchTerm(searchParam), [searchParam]);
   useEffect(() => setSelectedCategory(categoryParam), [categoryParam]);
@@ -142,51 +159,58 @@ const ProductDevelopmentPage = () => {
       return navigate('/login?redirect=/product-development');
     }
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.message) {
-      return toast({ variant: 'destructive', title: 'Error', description: 'Please fill out all fields.' });
+    if (!formData.name || !formData.email || !formData.phone || !formData.productName || !formData.problemStatement || !formData.detailedDescription || !formData.agreedToTerms) {
+      return toast({ variant: 'destructive', title: 'Error', description: 'Please fill out all mandatory fields and agree to the Terms & Conditions.' });
     }
-
     setIsSubmitting(true);
     try {
       await loadRazorpay();
-
-      // 1. Create Order
-      const orderData = await fetchWithAuth<{
-        orderId: string;
-        amount: number;
-        currency: string;
-        keyId: string;
-      }>('/api/contact/consultation/order', { method: 'POST' });
-
+      const orderData = await fetchWithAuth<{ orderId: string; amount: number; currency: string; keyId: string; }>('/api/contact/consultation/order', { method: 'POST' });
       const options = {
-        key: orderData.data?.keyId,
-        amount: orderData.data?.amount,
-        currency: orderData.data?.currency,
-        name: 'JG Innovative Hub',
-        description: 'Consultation Booking Fee',
-        order_id: orderData.data?.orderId,
+        key: orderData.data?.keyId, amount: orderData.data?.amount, currency: orderData.data?.currency, name: 'JG Innovative Hub', description: 'Product Development Consultation', order_id: orderData.data?.orderId,
         handler: async (response: any) => {
           try {
-            // 2. Submit Form with Payment Details
-            const verifyData = await fetchWithAuth<any>('/api/contact/consultation/submit', {
-              method: 'POST',
-              body: JSON.stringify({
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                message: formData.message,
-                subject: 'Product Development Consultation Booking',
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
+            const compiledMessage = `
+Product Name: ${formData.productName}
+Company: ${formData.company || 'N/A'}
+Category: ${formData.productCategory}
+Stage: ${formData.currentStage}
+Budget: ${formData.estimatedBudget}
+Timeline: ${formData.expectedTimeline || 'N/A'}
 
-            toast({
-              title: 'Consultation Booked!',
-              description: 'Payment successful. Our engineering team will contact you shortly.',
+Problem Statement:
+${formData.problemStatement}
+
+Detailed Description:
+${formData.detailedDescription}`;
+
+            const payload = new FormData();
+            payload.append('name', formData.name);
+            payload.append('email', formData.email);
+            payload.append('phone', formData.phone);
+            payload.append('subject', 'Product Development Consultation Booking');
+            payload.append('message', compiledMessage);
+            payload.append('razorpay_order_id', response.razorpay_order_id);
+            payload.append('razorpay_payment_id', response.razorpay_payment_id);
+            payload.append('razorpay_signature', response.razorpay_signature);
+            documents.forEach(doc => payload.append('files', doc));
+            images.forEach(img => payload.append('files', img));
+
+            const token = localStorage.getItem('authToken') || localStorage.getItem('adminToken');
+            const configuredApiUrl = typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL.trim() : '';
+            const API_URL = import.meta.env.DEV ? '' : (configuredApiUrl && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/|$)/i.test(configuredApiUrl) ? configuredApiUrl : 'https://jg-innovative-hub-backend.onrender.com');
+            const BASE_URL = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+
+            const res = await fetch(`${BASE_URL}/api/contact/consultation/submit`, {
+              method: 'POST',
+              headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+              body: payload,
             });
-            setFormData({ name: '', email: '', phone: '', message: '' });
+            if (!res.ok) throw new Error('Payment verified but failed to book.');
+            
+            toast({ title: 'Consultation Booked!', description: 'Payment successful. Our team will contact you shortly.' });
+            setFormData({ name: '', company: '', email: '', phone: '', productName: '', productCategory: 'IoT', currentStage: 'Idea', estimatedBudget: '', expectedTimeline: '', problemStatement: '', detailedDescription: '', agreedToTerms: false });
+            setDocuments([]); setImages([]);
           } catch (err: any) {
             toast({
               variant: 'destructive',
@@ -515,66 +539,102 @@ const ProductDevelopmentPage = () => {
               </p>
 
               <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Full Name</label>
-                  <Input 
-                    required 
-                    placeholder="John Doe" 
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="h-12 bg-background"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Email Address</label>
-                    <Input 
-                      required 
-                      type="email" 
-                      placeholder="john@company.com" 
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="h-12 bg-background"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Full Name *</label>
+                      <Input required placeholder="Your name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="bg-background" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Company (Optional)</label>
+                      <Input placeholder="Company / Institution" value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} className="bg-background" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Phone Number</label>
-                    <Input 
-                      required 
-                      type="tel" 
-                      placeholder="+91 98765 43210" 
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="h-12 bg-background"
-                    />
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Email Address *</label>
+                      <Input required type="email" placeholder="you@example.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="bg-background" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Phone Number *</label>
+                      <Input required placeholder="+91 90000 00000" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="bg-background" />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">Project Details</label>
-                  <Textarea 
-                    required 
-                    placeholder="Tell us briefly about your hardware idea or the challenges you are facing..." 
-                    className="min-h-[120px] resize-none bg-background"
-                    value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Product Name *</label>
+                    <Input required placeholder="e.g. Smart Water Meter" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} className="bg-background" />
+                  </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="w-full h-12 text-base font-bold rounded-xl mt-4"
-                >
-                  {isSubmitting ? 'Processing Payment...' : 'Pay ₹49 & Reserve Slot'}
-                </Button>
-                
-                <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Your information is secure. NDA available upon request.
-                </p>
-              </form>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Product Category *</label>
+                      <select required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.productCategory} onChange={(e) => setFormData({...formData, productCategory: e.target.value})}>
+                        <option>IoT</option>
+                        <option>Robotics</option>
+                        <option>AI/ML</option>
+                        <option>Hardware/PCB</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Current Stage *</label>
+                      <select required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.currentStage} onChange={(e) => setFormData({...formData, currentStage: e.target.value})}>
+                        <option>Idea</option>
+                        <option>Prototype</option>
+                        <option>MVP</option>
+                        <option>Production Ready</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Estimated Budget</label>
+                      <Input placeholder="₹50,000 – ₹5,00,000" value={formData.estimatedBudget} onChange={(e) => setFormData({...formData, estimatedBudget: e.target.value})} className="bg-background" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Expected Timeline</label>
+                      <Input placeholder="e.g. 3-4 months" value={formData.expectedTimeline} onChange={(e) => setFormData({...formData, expectedTimeline: e.target.value})} className="bg-background" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Problem Statement *</label>
+                    <Textarea required placeholder="What problem does this product solve?" value={formData.problemStatement} onChange={(e) => setFormData({...formData, problemStatement: e.target.value})} className="min-h-[80px] bg-background" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Detailed Description *</label>
+                    <Textarea required placeholder="Describe features, users, constraints, references..." value={formData.detailedDescription} onChange={(e) => setFormData({...formData, detailedDescription: e.target.value})} className="min-h-[120px] bg-background" />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Upload Documents (Optional)</label>
+                      <Input type="file" multiple accept=".pdf,.doc,.docx,.txt" onChange={(e) => setDocuments(Array.from(e.target.files || []))} className="bg-background file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-foreground">Upload Images (Optional)</label>
+                      <Input type="file" multiple accept="image/*" onChange={(e) => setImages(Array.from(e.target.files || []))} className="bg-background file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-4 pt-2 border-t border-border/50">
+                    <input type="checkbox" id="terms" required checked={formData.agreedToTerms} onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})} className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                    <label htmlFor="terms" className="text-sm text-muted-foreground">
+                      I agree to the <a href="/terms-conditions" className="text-primary hover:underline" target="_blank">Terms & Conditions</a> and <a href="/privacy-policy" className="text-primary hover:underline" target="_blank">Privacy Policy</a>
+                    </label>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-primary to-primary/80 hover:to-primary text-white shadow-lg shadow-primary/30 mt-4"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Processing Payment...' : 'Pay ₹49 & Reserve Slot'}
+                  </Button>
+                </form>
             </div>
 
           </div>
