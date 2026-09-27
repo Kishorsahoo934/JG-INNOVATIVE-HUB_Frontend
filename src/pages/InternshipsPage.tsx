@@ -16,7 +16,7 @@ import {
   User, Mail, Phone, CheckCircle2, AlertCircle, 
   ExternalLink, Calendar, GraduationCap, ChevronRight,
   Sparkles, Award, Wallet, Star, ShieldCheck, ArrowRight
-} from 'lucide-react';
+, Calendar, MapPin, Wallet, Timer } from 'lucide-react';
 import SEO from '@/components/SEO';
 import ScrollReveal from '@/components/ScrollReveal';
 
@@ -415,7 +415,20 @@ const InternshipsPage = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {paidPosts.map(post => (
                           <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-primary/50 transition-colors flex flex-col h-full">
+                            {post.image && (
+                              <div className="w-full h-32 mb-4 rounded-lg overflow-hidden border border-border/50">
+                                <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              </div>
+                            )}
                             <h3 className="font-bold text-primary mb-2 text-lg">{post.title}</h3>
+                            <div className="flex flex-col gap-1.5 mb-3 text-xs text-muted-foreground">
+                              {post.location && <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> <span>{post.location}</span></div>}
+                              {post.stipend && <div className="flex items-center gap-1.5"><Wallet className="w-3.5 h-3.5 text-emerald-500" /> <span className="font-semibold text-emerald-600 dark:text-emerald-400">{post.stipend}</span></div>}
+                              {(post.startDate || post.deadline) && (
+                                <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> <span>{post.startDate ? `Starts ${new Date(post.startDate).toLocaleDateString()}` : ''} {post.deadline ? `• Ends ${new Date(post.deadline).toLocaleDateString()}` : ''}</span></div>
+                              )}
+                              {post.tier && <div className="flex items-center gap-1.5"><Timer className="w-3.5 h-3.5" /> <span>{post.tier}</span></div>}
+                            </div>
                             <p className="text-sm text-foreground/80 mb-4 flex-grow">{post.description}</p>
                             
                             {post.skills && post.skills.length > 0 && (
@@ -476,8 +489,20 @@ const InternshipsPage = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {selfFundedPosts.map(post => (
                           <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-blue-500/50 transition-colors flex flex-col h-full">
+                            {post.image && (
+                              <div className="w-full h-32 mb-4 rounded-lg overflow-hidden border border-border/50">
+                                <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              </div>
+                            )}
                             <h3 className="font-bold text-blue-500 mb-2 text-lg">{post.title}</h3>
-                            <Badge variant="outline" className="mb-3 text-[10px] border-blue-500/20 text-blue-500 w-fit">{post.tier || 'Any Tier'}</Badge>
+                            <div className="flex flex-col gap-1.5 mb-3 text-xs text-muted-foreground mt-1">
+                              {post.location && <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> <span>{post.location}</span></div>}
+                              {post.stipend && <div className="flex items-center gap-1.5"><Wallet className="w-3.5 h-3.5 text-blue-500" /> <span className="font-semibold text-blue-600 dark:text-blue-400">{post.stipend}</span></div>}
+                              {(post.startDate || post.deadline) && (
+                                <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> <span>{post.startDate ? `Starts ${new Date(post.startDate).toLocaleDateString()}` : ''} {post.deadline ? `• Ends ${new Date(post.deadline).toLocaleDateString()}` : ''}</span></div>
+                              )}
+                              {post.tier && <div className="flex items-center gap-1.5"><Timer className="w-3.5 h-3.5" /> <span>{post.tier}</span></div>}
+                            </div>
                             <p className="text-sm text-foreground/80 mb-4 flex-grow">{post.description}</p>
                             
                             {post.skills && post.skills.length > 0 && (
@@ -662,18 +687,18 @@ const InternshipsPage = () => {
                                 className="w-full bg-background border border-border px-3 py-2 text-sm rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                               >
                                 {selectedCategory === 'paid' ? (
-                                  <>
-                                    <option value="3rd-year">3rd Year (B.Tech / MCA / M.Sc)</option>
-                                    <option value="4th-year">4th Year (B.Tech / MCA / M.Sc)</option>
-                                  </>
-                                ) : (
-                                  <>
-                                    <option value="1st-year">1st Year (B.Tech / MCA / M.Sc / Diploma)</option>
-                                    <option value="2nd-year">2nd Year (B.Tech / MCA / M.Sc / Diploma)</option>
-                                    <option value="3rd-year">3rd Year (B.Tech / MCA / M.Sc / Diploma)</option>
-                                    <option value="4th-year">4th Year (B.Tech / MCA / M.Sc)</option>
-                                  </>
-                                )}
+                                    <>
+                                      <option value="3rd & 4th Year B.Tech/MCA/M.Sc">3rd & 4th Year B.Tech/MCA/M.Sc</option>
+                                      <option value="Working professional or any skilled expertise">Working professional or any skilled expertise</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="1st-year">1st Year (B.Tech / MCA / M.Sc / Diploma)</option>
+                                      <option value="2nd-year">2nd Year (B.Tech / MCA / M.Sc / Diploma)</option>
+                                      <option value="3rd & 4th Year B.Tech/MCA/M.Sc">3rd & 4th Year B.Tech/MCA/M.Sc</option>
+                                      <option value="Working professional or any skilled expertise">Working professional or any skilled expertise</option>
+                                    </>
+                                  )}
                               </select>
                               {selectedCategory === 'paid' && (
                                 <p className="text-[10px] text-foreground font-medium">Note: Paid internships require active enrollment in 3rd or 4th year.</p>

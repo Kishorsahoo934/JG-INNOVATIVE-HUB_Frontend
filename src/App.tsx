@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { visitorsApi } from "./services/api";
+import { useEffect } from "react";
 
 // Context Providers
 import { CartProvider } from "./context/CartContext";
@@ -63,6 +65,18 @@ function PageFallback() {
 
 const queryClient = new QueryClient();
 
+
+const VisitorTracker = () => {
+  useEffect(() => {
+    const hasHit = sessionStorage.getItem('visitor_hit');
+    if (!hasHit) {
+      visitorsApi.hit().catch(() => {});
+      sessionStorage.setItem('visitor_hit', 'true');
+    }
+  }, []);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <RealtimeBoundary>
@@ -74,6 +88,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
+                <VisitorTracker />
               <Suspense fallback={<PageFallback />}>
                 <Routes>
                   <Route path="/" element={<Layout><HomePage /></Layout>} />

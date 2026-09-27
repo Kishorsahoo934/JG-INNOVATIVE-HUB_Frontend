@@ -1204,6 +1204,10 @@ export interface Order {
     price: number;
     name?: string;
     image?: string;
+    startDate?: string;
+    deadline?: string;
+    location?: string;
+    stipend?: string;
   }>;
   address: Address;
   totalAmount: number;
