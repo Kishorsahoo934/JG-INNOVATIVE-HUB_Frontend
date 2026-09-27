@@ -15,8 +15,7 @@ import {
   Briefcase, Cpu, Layers, Code, FileText, Link2, 
   User, Mail, Phone, CheckCircle2, AlertCircle, 
   ExternalLink, Calendar, GraduationCap, ChevronRight,
-  Sparkles, Award, Wallet, Star, ShieldCheck, ArrowRight
-, Calendar, MapPin, Wallet, Timer } from 'lucide-react';
+  Sparkles, Award, Wallet, Star, ShieldCheck, ArrowRight, MapPin, Timer } from 'lucide-react';
 import SEO from '@/components/SEO';
 import ScrollReveal from '@/components/ScrollReveal';
 
