@@ -51,7 +51,7 @@ const InternshipsPage = () => {
     if (category === 'self-funded' && tier) {
       setSelectedTier(tier);
     }
-    setForm(prev => ({ ...prev, yearOfStudy: '3rd-year' }));
+    setForm(prev => ({ ...prev, yearOfStudy: 'Student' }));
     setShowForm(true);
     
     // Smooth scroll and focus on name field
@@ -100,7 +100,7 @@ const InternshipsPage = () => {
     githubUrl: '',
     linkedinUrl: '',
     personalPortfolioUrl: '',
-    yearOfStudy: '3rd-year' // default
+    yearOfStudy: 'Student' // default
   });
 
   // Load user data into form when logged in
@@ -195,14 +195,6 @@ const InternshipsPage = () => {
       return;
     }
 
-    // Validation specific to category
-    if (selectedCategory === 'paid') {
-      if (form.yearOfStudy !== '3rd-year' && form.yearOfStudy !== '4th-year') {
-        toast.error('Paid internships are restricted to 3rd year & 4th year students only.');
-        return;
-      }
-    }
-
     setIsSubmitting(true);
 
     if (selectedCategory === 'self-funded') {
@@ -259,7 +251,7 @@ const InternshipsPage = () => {
                   githubUrl: '',
                   linkedinUrl: '',
                   personalPortfolioUrl: '',
-                  yearOfStudy: '3rd-year'
+                  yearOfStudy: 'Student'
                 }));
                 setShowForm(false);
                 toast.success('You can view this application in your user profile.');
@@ -317,7 +309,7 @@ const InternshipsPage = () => {
             githubUrl: '',
             linkedinUrl: '',
             personalPortfolioUrl: '',
-            yearOfStudy: '3rd-year'
+            yearOfStudy: 'Student'
           }));
           setShowForm(false);
           toast.success('You can view this application in your user profile.');
@@ -386,10 +378,10 @@ const InternshipsPage = () => {
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>Industry-sponsored real product R&D</span>
                         </div>
-                        <div className="flex items-center gap-2 font-semibold text-foreground">
+                        {/* <div className="flex items-center gap-2 font-semibold text-foreground">
                           <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                           <span>Eligibility: 3rd & 4th Year B.Tech/MCA/M.Sc students only</span>
-                        </div>
+                        </div> */}
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>Certificate of Completion + Project Letter</span>
@@ -411,9 +403,9 @@ const InternshipsPage = () => {
                         <Briefcase className="w-5 h-5 text-primary" />
                         Available Paid Positions
                       </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                         {paidPosts.map(post => (
-                          <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-primary/50 transition-colors flex flex-col h-full">
+                          <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-primary/50 transition-colors flex flex-col">
                             {post.image && (
                               <div className="w-full h-32 mb-4 rounded-lg overflow-hidden border border-border/50">
                                 <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -428,7 +420,7 @@ const InternshipsPage = () => {
                               )}
                               {post.tier && <div className="flex items-center gap-1.5"><Timer className="w-3.5 h-3.5" /> <span>{post.tier}</span></div>}
                             </div>
-                            <p className="text-sm text-foreground/80 mb-4 flex-grow">{post.description}</p>
+                            <p className="text-sm text-foreground/80 mb-4 whitespace-pre-wrap">{post.description}</p>
                             
                             {post.skills && post.skills.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mb-5">
@@ -438,10 +430,10 @@ const InternshipsPage = () => {
                             
                             <Button 
                               onClick={() => handleApplyClick('paid')} 
-                              className="w-full font-bold gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
+                              className="w-full font-bold gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-all mt-auto"
                               variant="default"
                             >
-                              Apply Now
+                              Apply Now ??
                               <ArrowRight className="w-4 h-4" />
                             </Button>
                           </div>
@@ -473,11 +465,10 @@ const InternshipsPage = () => {
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Self-Funded Research Internship</h2>
                     <p className="text-sm text-foreground">
-                      Gain hands-on experience, microcontroller component kits, and official engineering certifications. Open to 1st, 2nd, 3rd, and 4th Year students.
+                      Gain hands-on experience, microcontroller component kits, and official engineering certifications.
                     </p>
                   </div>
                 </ScrollReveal>
-
                 
                   {selfFundedPosts.length > 0 && (
                     <div className="mb-8 mt-6">
@@ -485,9 +476,9 @@ const InternshipsPage = () => {
                         <Briefcase className="w-5 h-5 text-blue-500" />
                         Available Self-Funded Positions
                       </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                         {selfFundedPosts.map(post => (
-                          <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-blue-500/50 transition-colors flex flex-col h-full">
+                          <div key={post._id} className="bg-card border border-border p-5 rounded-xl shadow-lg relative overflow-hidden group hover:border-blue-500/50 transition-colors flex flex-col">
                             {post.image && (
                               <div className="w-full h-32 mb-4 rounded-lg overflow-hidden border border-border/50">
                                 <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -502,7 +493,7 @@ const InternshipsPage = () => {
                               )}
                               {post.tier && <div className="flex items-center gap-1.5"><Timer className="w-3.5 h-3.5" /> <span>{post.tier}</span></div>}
                             </div>
-                            <p className="text-sm text-foreground/80 mb-4 flex-grow">{post.description}</p>
+                            <p className="text-sm text-foreground/80 mb-4 whitespace-pre-wrap">{post.description}</p>
                             
                             {post.skills && post.skills.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mb-5">
@@ -512,10 +503,10 @@ const InternshipsPage = () => {
                             
                             <Button 
                               onClick={() => handleApplyClick('self-funded', post.tier as any)} 
-                              className="w-full font-bold gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white"
+                              className="w-full font-bold gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white mt-auto"
                               variant="outline"
                             >
-                              Apply Now
+                              Apply Now ??
                               <ArrowRight className="w-4 h-4" />
                             </Button>
                           </div>
@@ -525,43 +516,7 @@ const InternshipsPage = () => {
                   )}
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    {
-                      id: '1-month',
-                      duration: '1 Month Research Program',
-                      price: '₹299',
-                      tagline: 'Certificate Track',
-                      benefits: [
-                        'Official Verification Certificate',
-                        'Basic Hardware Components Access',
-                        'Online Resource Access',
-                        'Standard Lab Projects'
-                      ]
-                    },
-                    {
-                      id: '45-days',
-                      duration: '45 Days Research Program',
-                      price: '₹399',
-                      tagline: 'Certificate + LOR Track',
-                      benefits: [
-                        'Official Verification Certificate',
-                        'Official Letter of Recommendation (LOR)',
-                        'Embedded System Components Kit',
-                        'Intermediate Project Guidance'
-                      ]
-                    },
-                    {
-                      id: '2-month',
-                      duration: '2 Months Research Program',
-                      price: '₹499',
-                      tagline: 'Career Accelerator Track',
-                      benefits: [
-                        'Official Verification Certificate',
-                        'Official Letter of Recommendation (LOR)',
-                        'IoT & Autonomous Robotics Kits',
-                        'Placement Guidance & Reference Reviews',
-                        'Direct Hiring Consideration'
-                      ]
-                    }
+                    
                   ].map((tier) => (
                     <div 
                       key={tier.id}
@@ -592,7 +547,7 @@ const InternshipsPage = () => {
                           variant="outline"
                           className="w-full text-xs font-bold py-4 border-blue-500/30 hover:bg-blue-500 hover:text-foreground hover:border-blue-500 transition-colors shadow-sm"
                         >
-                          Apply Now ({tier.price})
+                          Apply Now ?? ({tier.price})
                         </Button>
                       </div>
                     </div>
@@ -687,7 +642,7 @@ const InternshipsPage = () => {
                               >
                                 {selectedCategory === 'paid' ? (
                                     <>
-                                      <option value="3rd & 4th Year B.Tech/MCA/M.Sc">3rd & 4th Year B.Tech/MCA/M.Sc</option>
+                                      <option value="student">Student</option>
                                       <option value="Working professional or any skilled expertise">Working professional or any skilled expertise</option>
                                     </>
                                   ) : (
@@ -700,7 +655,7 @@ const InternshipsPage = () => {
                                   )}
                               </select>
                               {selectedCategory === 'paid' && (
-                                <p className="text-[10px] text-foreground font-medium">Note: Paid internships require active enrollment in 3rd or 4th year.</p>
+                                <p className="text-[10px] text-foreground font-medium"></p>
                               )}
                             </div>
 
