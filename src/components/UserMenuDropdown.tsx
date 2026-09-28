@@ -82,12 +82,12 @@ export function UserMenuDropdown({ className = '' }: { className?: string }) {
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-accent">
+          {/* <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-accent">
             <Link to="/account?tab=sessions" className="flex items-center gap-2.5 px-2 py-2 text-xs sm:text-sm font-medium">
               <Calendar className="w-4 h-4 text-emerald-500" />
               <span>My Sessions</span>
             </Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
 
           {user?.role === 'tutor' && (
             <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-accent">
