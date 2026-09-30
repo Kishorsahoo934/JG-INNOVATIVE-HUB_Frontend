@@ -1234,3 +1234,12 @@ export interface Project extends Omit<Product, 'category' | 'subcategory'> {
 
 
 
+
+export const feedbackApi = {
+  submit: async (data: { rating: number; message: string; device?: string }) => {
+    return fetchWithAuth<unknown>('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+};

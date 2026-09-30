@@ -9,14 +9,7 @@ const Footer = () => {
   useEffect(() => {
     const fetchVisitors = async () => {
       try {
-        const visited = sessionStorage.getItem('platform_visited');
-        let res;
-        if (!visited) {
-          res = await visitorsApi.hit();
-          sessionStorage.setItem('platform_visited', 'true');
-        } else {
-          res = await visitorsApi.get();
-        }
+        const res = await visitorsApi.get();
         if (res.success && res.data) {
           setVisitorCount(res.data.count);
         }

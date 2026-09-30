@@ -193,6 +193,14 @@ ${formData.detailedDescription}`;
             payload.append('razorpay_order_id', response.razorpay_order_id);
             payload.append('razorpay_payment_id', response.razorpay_payment_id);
             payload.append('razorpay_signature', response.razorpay_signature);
+            if (formData.company) payload.append('company', formData.company);
+            payload.append('productName', formData.productName);
+            payload.append('productCategory', formData.productCategory);
+            payload.append('currentStage', formData.currentStage);
+            if (formData.estimatedBudget) payload.append('estimatedBudget', formData.estimatedBudget);
+            if (formData.expectedTimeline) payload.append('expectedTimeline', formData.expectedTimeline);
+            payload.append('problemStatement', formData.problemStatement);
+            payload.append('detailedDescription', formData.detailedDescription);
             documents.forEach(doc => payload.append('files', doc));
             images.forEach(img => payload.append('files', img));
 
@@ -251,14 +259,14 @@ ${formData.detailedDescription}`;
   };
 
   return (
-    <EShopLayout searchQuery={searchTerm} onSearchChange={setSearchTerm}>
+    <EShopLayout hideSearch={true}>
       <SEO 
         title="Hardware Engineering Reimagined | Product Development"
         description="Transform your innovative idea into a real electronic product. From concept, PCB design, embedded firmware, prototyping, testing, to manufacturing support."
       />
 
       {/* 1. HERO SECTION */}
-      <section className="relative pt-20 pb-24 md:pt-32 md:pb-32 overflow-hidden bg-background">
+      <section className="relative pt-4 pb-24 md:pt-12 md:pb-32 overflow-hidden bg-background">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
           
