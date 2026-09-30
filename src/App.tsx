@@ -68,11 +68,7 @@ const queryClient = new QueryClient();
 
 const VisitorTracker = () => {
   useEffect(() => {
-    const hasHit = sessionStorage.getItem('visitor_hit');
-    if (!hasHit) {
-      visitorsApi.hit().catch(() => {});
-      sessionStorage.setItem('visitor_hit', 'true');
-    }
+    visitorsApi.hit().catch(() => {});
   }, []);
   return null;
 };

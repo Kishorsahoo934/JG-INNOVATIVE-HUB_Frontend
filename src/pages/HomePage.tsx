@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Settings, Calendar, Clock, ArrowRight, Cpu, ShieldCheck, Wrench, LayoutGrid, ShoppingCart } from 'lucide-react';
+import { Zap, Settings, Calendar, Clock, ArrowRight, Cpu, ShieldCheck, Wrench, LayoutGrid, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
-import { workshopsApi, Workshop } from '@/services/api';
+import { workshopsApi, Workshop, feedbackApi } from '@/services/api';
 import { useFreshData } from '@/hooks/useFreshData';
 import ScrollReveal from '@/components/ScrollReveal';
+import { useToast } from '@/hooks/use-toast';
 
 const offerings = [
   {
@@ -37,7 +38,91 @@ const offerings = [
   },
 ];
 
+
+const WebsiteFeedback = () => {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) {
+      toast({ title: 'Rating Required', description: 'Please select a star rating.', variant: 'destructive' });
+      return;
+    }
+    if (!message.trim()) {
+      toast({ title: 'Message Required', description: 'Please enter your feedback message.', variant: 'destructive' });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await feedbackApi.submit({ rating, message, device: navigator.userAgent });
+      toast({ title: 'Feedback Submitted', description: 'Thank you for your feedback!' });
+      setRating(0);
+      setMessage('');
+    } catch (err) {
+      toast({ title: 'Submission Failed', description: err.message || 'Something went wrong', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="relative z-10 container mx-auto px-4 pb-16 pt-8 border-t border-border/20">
+      <ScrollReveal direction="up">
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-white mb-2">
+          Website Feedback
+        </h2>
+        <p className="text-center text-xs sm:text-sm text-gray-400 mb-8 max-w-md mx-auto">
+          We value your opinion. Let us know how we can improve your experience.
+        </p>
+      </ScrollReveal>
+
+      <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-[#1a2332]/60 backdrop-blur-sm border border-border/40 p-6 sm:p-8 rounded-2xl">
+        <div className="flex justify-center gap-2 mb-6">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              type="button"
+              key={star}
+              onMouseEnter={() => setHoverRating(star)}
+              onMouseLeave={() => setHoverRating(0)}
+              onClick={() => setRating(star)}
+              className="focus:outline-none transition-transform hover:scale-110"
+            >
+              <Star
+                className={`w-8 h-8 ${
+                  star <= (hoverRating || rating)
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-gray-500'
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+        <div className="mb-6">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Tell us what you think..."
+            className="w-full bg-[#0f172a]/80 border border-border/40 rounded-xl p-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 min-h-[120px] resize-y"
+          />
+        </div>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-sm font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+        </Button>
+      </form>
+    </div>
+  );
+};
+
 const HomePage = () => {
+
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -296,6 +381,7 @@ const HomePage = () => {
             </>
           )}
         </div>
+        <WebsiteFeedback />
       </section>
     </>
   );
