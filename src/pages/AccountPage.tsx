@@ -501,21 +501,7 @@ const AccountPage = () => {
                   <ChevronRight className="w-4 h-4 opacity-60" />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleTabChange('sessions')}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    activeTab === 'sessions'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-4.5 h-4.5" />
-                    <span>My Sessions</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-60" />
-                </button>
+                
 
                 <button
                   type="button"
@@ -881,56 +867,9 @@ const AccountPage = () => {
                   </Card>
                 )}
 
-                {/* Pending Tutor Applications */}
-                {user?.role === 'tutor' && user?.tutorStatus === 'pending' && (
-                  <Card className="bg-[#101726]/60 backdrop-blur-sm border-border md:col-span-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <GraduationCap className="w-5 h-5 text-primary" />
-                        Share Your Robotics Expertise
-                      </CardTitle>
-                      <CardDescription>
-                        Apply to become a verified robotics tutor on Innovative Hub. Design courses, schedule 1-on-1 tutoring sessions, and earn sharing your knowledge.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Badge variant="outline" className="text-amber-500 border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold">
-                        Tutor Application Pending Approval
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                )}
+                
 
-                {/* Standard Student / Rejected Tutor Options */}
-                {(!user?.role || user?.role === 'student') && (
-                  <Card className="bg-[#101726]/60 backdrop-blur-sm border-border md:col-span-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <GraduationCap className="w-5 h-5 text-primary" />
-                        Share Your Robotics Expertise
-                      </CardTitle>
-                      <CardDescription>
-                        Apply to become a verified robotics tutor on Innovative Hub. Design courses, schedule 1-on-1 tutoring sessions, and earn sharing your knowledge.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {user?.tutorStatus === 'rejected' ? (
-                        <div className="space-y-2">
-                          <Badge variant="outline" className="text-destructive border-destructive/40 bg-destructive/10 px-3 py-1 text-xs font-semibold">
-                            Application Rejected
-                          </Badge>
-                          <p className="text-xs text-muted-foreground">Please contact support or re-apply after addressing feedback.</p>
-                          <Button size="sm" onClick={() => navigate('/tutor-registration')}>Re-apply Now</Button>
-                        </div>
-                      ) : (
-                        <Button onClick={() => navigate('/tutor-registration')} className="gap-2 font-semibold">
-                          Become a Tutor
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
+                
                 {/* Profile Settings */}
                 <Card className="bg-card/60 backdrop-blur-sm border-border">
                   <CardHeader>
@@ -1350,74 +1289,7 @@ const AccountPage = () => {
             </TabsContent>
 
 
-            {/* My Booked Sessions Tab */}
-            <TabsContent value="sessions" className="space-y-4">
-              <Card className="bg-card/60 backdrop-blur-sm border-border">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    My Mentoring Sessions
-                  </CardTitle>
-                  <CardDescription>View your scheduled 1-on-1 robotics consultations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingSessions ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-                    </div>
-                  ) : studentSessions.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-4">No mentoring sessions booked yet</p>
-                      <Button asChild>
-                        <Link to="/tutor-directory">Find a Tutor</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {studentSessions.map((session) => (
-                        <div key={session._id} className="border border-border rounded-lg p-4 bg-background/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 capitalize">
-                                {session.topic}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                Fee Paid: ₹{formatPrice(session.cost)}
-                              </span>
-                            </div>
-                            <h4 className="font-bold text-sm text-foreground">
-                              {new Date(session.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                            </h4>
-                            <p className="text-xs text-muted-foreground">Time Slot: {session.time}</p>
-                            {session.tutorId && typeof session.tutorId === 'object' && (
-                              <p className="text-xs text-muted-foreground">
-                                Tutor: <span className="font-semibold text-foreground">{session.tutorId.name}</span>
-                              </p>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            {session.meetingLink ? (
-                              <Button size="sm" className="gap-2 font-bold" asChild>
-                                <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="w-4 h-4" />
-                                  Join Session
-                                </a>
-                              </Button>
-                            ) : (
-                              <Badge variant="outline" className="text-muted-foreground">
-                                Join Link Not Available
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            
 
             {/* Logout Tab */}
             <TabsContent value="logout" className="space-y-4">

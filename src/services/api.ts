@@ -1,4 +1,4 @@
-// API Service for connecting to external backend
+﻿// API Service for connecting to external backend
 const PRODUCTION_API_URL = 'https://jg-innovative-hub-backend.onrender.com';
 const configuredApiUrl = typeof import.meta.env.VITE_API_URL === 'string'
   ? import.meta.env.VITE_API_URL.trim()
@@ -1241,5 +1241,31 @@ export const feedbackApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+};
+
+export const projectBookingApi = {
+  createOrder: async () => {
+    const res = await fetchWithAuth<unknown>('/api/project-bookings/razorpay-order', { method: 'POST' });
+    return res as ApiResponse<any>;
+  },
+      submit: async (formData: FormData) => {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/project-bookings/submit`, {
+        method: 'POST',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: formData,
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: 'Network error' }));
+        throw new Error(error.message || 'Request failed');
+      }
+      return res.json() as Promise<ApiResponse<any>>;
+    },
+  getMyBookings: async () => {
+    const res = await fetchWithAuth<unknown>('/api/project-bookings/my-bookings');
+    return res as ApiResponse<any[]>;
   }
 };
