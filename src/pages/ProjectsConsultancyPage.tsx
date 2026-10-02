@@ -9,6 +9,7 @@ import { PLACEHOLDER_IMAGE } from '@/constants/media';
 import { formatPrice } from '@/utils/price';
 import SEO from '@/components/SEO';
 import EShopLayout from '../components/EShopLayout';
+import ProjectBookingForm from '../components/ProjectBookingForm';
 
 const ProjectsConsultancyPage = () => {
   const navigate = useNavigate();
@@ -239,6 +240,7 @@ const ProjectsConsultancyPage = () => {
           </div>
         )}
       </div>
+      <ProjectBookingForm />
     </EShopLayout>
   );
 };

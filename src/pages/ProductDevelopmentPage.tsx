@@ -14,6 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
 import EShopLayout from '../components/EShopLayout';
+import ProjectBookingForm from '../components/ProjectBookingForm';
 import ScrollReveal from '@/components/ScrollReveal';
 import { developedProductsApi, DevelopedProduct, productDevContentApi, ProductDevContentItem } from '../services/api';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
@@ -62,12 +63,8 @@ const ProductDevelopmentPage = () => {
     email: '', 
     phone: '', 
     productName: '',
-    productCategory: 'IoT',
-    currentStage: 'Idea',
-    estimatedBudget: '₹50,000 - ₹5,00,000',
-    expectedTimeline: '',
-    problemStatement: '',
     detailedDescription: '',
+    comments: '',
     agreedToTerms: false
   });
   const [documents, setDocuments] = useState<File[]>([]);
@@ -159,7 +156,7 @@ const ProductDevelopmentPage = () => {
       return navigate('/login?redirect=/product-development');
     }
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.productName || !formData.problemStatement || !formData.detailedDescription || !formData.agreedToTerms) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.productName || !formData.detailedDescription || !formData.agreedToTerms) {
       return toast({ variant: 'destructive', title: 'Error', description: 'Please fill out all mandatory fields and agree to the Terms & Conditions.' });
     }
     setIsSubmitting(true);
@@ -170,19 +167,15 @@ const ProductDevelopmentPage = () => {
         key: orderData.data?.keyId, amount: orderData.data?.amount, currency: orderData.data?.currency, name: 'JG Innovative Hub', description: 'Product Development Consultation', order_id: orderData.data?.orderId,
         handler: async (response: any) => {
           try {
-            const compiledMessage = `
+                        const compiledMessage = `
 Product Name: ${formData.productName}
 Company: ${formData.company || 'N/A'}
-Category: ${formData.productCategory}
-Stage: ${formData.currentStage}
-Budget: ${formData.estimatedBudget}
-Timeline: ${formData.expectedTimeline || 'N/A'}
-
-Problem Statement:
-${formData.problemStatement}
 
 Detailed Description:
-${formData.detailedDescription}`;
+${formData.detailedDescription}
+
+Comments:
+${formData.comments}`;
 
             const payload = new FormData();
             payload.append('name', formData.name);
@@ -195,11 +188,6 @@ ${formData.detailedDescription}`;
             payload.append('razorpay_signature', response.razorpay_signature);
             if (formData.company) payload.append('company', formData.company);
             payload.append('productName', formData.productName);
-            payload.append('productCategory', formData.productCategory);
-            payload.append('currentStage', formData.currentStage);
-            if (formData.estimatedBudget) payload.append('estimatedBudget', formData.estimatedBudget);
-            if (formData.expectedTimeline) payload.append('expectedTimeline', formData.expectedTimeline);
-            payload.append('problemStatement', formData.problemStatement);
             payload.append('detailedDescription', formData.detailedDescription);
             documents.forEach(doc => payload.append('files', doc));
             images.forEach(img => payload.append('files', img));
@@ -217,7 +205,8 @@ ${formData.detailedDescription}`;
             if (!res.ok) throw new Error('Payment verified but failed to book.');
             
             toast({ title: 'Consultation Booked!', description: 'Payment successful. Our team will contact you shortly.' });
-            setFormData({ name: '', company: '', email: '', phone: '', productName: '', productCategory: 'IoT', currentStage: 'Idea', estimatedBudget: '', expectedTimeline: '', problemStatement: '', detailedDescription: '', agreedToTerms: false });
+            setFormData({ name: '', company: '', email: '', phone: '', productName: '', detailedDescription: '',
+    comments: '', agreedToTerms: false });
             setDocuments([]); setImages([]);
           } catch (err: any) {
             toast({
@@ -305,7 +294,7 @@ ${formData.detailedDescription}`;
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-in fade-in slide-in-from-bottom-2 duration-700 [animation-delay:1200ms] fill-mode-both">
-            <Button size="lg" className="h-14 px-8 text-base font-bold rounded-full w-full sm:w-auto shadow-lg shadow-primary/25 hover:scale-105 transition-transform" onClick={() => document.getElementById('consultation')?.scrollIntoView({ behavior: 'smooth' })}>
+            <Button size="lg" className="h-14 px-8 text-base font-bold rounded-full w-full sm:w-auto shadow-lg shadow-primary/25 hover:scale-105 transition-transform" onClick={() => document.getElementById('project-booking')?.scrollIntoView({ behavior: 'smooth' })}>
               Start Your Project
             </Button>
             <Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold rounded-full w-full sm:w-auto bg-background/50 backdrop-blur-sm border-border/60 hover:bg-secondary hover:text-secondary-foreground hover:scale-105 transition-all" onClick={() => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -326,6 +315,20 @@ ${formData.detailedDescription}`;
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-primary/5 border-t border-border/40">
+        <div className="container mx-auto px-4 text-center max-w-4xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Have you faced issues during your project work?
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Here is the perfect solution. Overcome your technical hurdles with expert guidance from our senior engineering team.
+          </p>
+          <Button size="lg" className="h-14 px-10 text-base font-bold rounded-full shadow-lg shadow-primary/25 hover:scale-105 transition-transform" onClick={() => document.getElementById('consultation')?.scrollIntoView({ behavior: 'smooth' })}>
+            Book Consultation
+          </Button>
         </div>
       </section>
 
@@ -574,47 +577,20 @@ ${formData.detailedDescription}`;
                     <Input required placeholder="e.g. Smart Water Meter" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} className="bg-background" />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Product Category *</label>
-                      <select required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.productCategory} onChange={(e) => setFormData({...formData, productCategory: e.target.value})}>
-                        <option>IoT</option>
-                        <option>Robotics</option>
-                        <option>AI/ML</option>
-                        <option>Hardware/PCB</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Current Stage *</label>
-                      <select required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.currentStage} onChange={(e) => setFormData({...formData, currentStage: e.target.value})}>
-                        <option>Idea</option>
-                        <option>Prototype</option>
-                        <option>MVP</option>
-                        <option>Production Ready</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Estimated Budget</label>
-                      <Input placeholder="₹50,000 – ₹5,00,000" value={formData.estimatedBudget} onChange={(e) => setFormData({...formData, estimatedBudget: e.target.value})} className="bg-background" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Expected Timeline</label>
-                      <Input placeholder="e.g. 3-4 months" value={formData.expectedTimeline} onChange={(e) => setFormData({...formData, expectedTimeline: e.target.value})} className="bg-background" />
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Problem Statement *</label>
-                    <Textarea required placeholder="What problem does this product solve?" value={formData.problemStatement} onChange={(e) => setFormData({...formData, problemStatement: e.target.value})} className="min-h-[80px] bg-background" />
-                  </div>
+                  
+
+                  
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-foreground">Detailed Description *</label>
                     <Textarea required placeholder="Describe features, users, constraints, references..." value={formData.detailedDescription} onChange={(e) => setFormData({...formData, detailedDescription: e.target.value})} className="min-h-[120px] bg-background" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">Any Comments (Optional)</label>
+                    <Textarea placeholder="Any additional comments..." value={formData.comments} onChange={(e) => setFormData({...formData, comments: e.target.value})} className="min-h-[80px] bg-background" />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -687,6 +663,7 @@ ${formData.detailedDescription}`;
         </div>
       </section>
 
+      <ProjectBookingForm />
     </EShopLayout>
   );
 };
