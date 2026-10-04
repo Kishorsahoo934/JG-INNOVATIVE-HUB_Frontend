@@ -204,7 +204,7 @@ ${formData.comments}`;
             });
             if (!res.ok) throw new Error('Payment verified but failed to book.');
             
-            toast({ title: 'Consultation Booked!', description: 'Payment successful. Our team will contact you shortly.' });
+            toast({ title: 'Consultation Booked!', description: 'Payment successful. Our team will contact you shortly. Please check your spam/junk folder for confirmation.' });
             setFormData({ name: '', company: '', email: '', phone: '', productName: '', detailedDescription: '',
     comments: '', agreedToTerms: false });
             setDocuments([]); setImages([]);

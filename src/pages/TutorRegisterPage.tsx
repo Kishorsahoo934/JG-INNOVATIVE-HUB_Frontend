@@ -177,7 +177,7 @@ const TutorRegisterPage = () => {
         await refreshUser();
         toast({
           title: 'Application Submitted!',
-          description: 'Your tutor profile application is pending admin approval.'
+          description: 'Your tutor profile application is pending admin approval. You will be notified via email (check your spam folder).'
         });
         navigate('/account?tab=settings');
       }

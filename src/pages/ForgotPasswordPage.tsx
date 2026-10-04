@@ -21,7 +21,7 @@ const ForgotPasswordPage = () => {
       await authApi.forgotPassword({ email });
       toast({
         title: 'Check your email',
-        description: 'If an account exists, a reset link has been sent.',
+        description: 'If an account exists, a reset link has been sent. (Check your spam/junk folder if not found)',
       });
     } catch (error) {
       toast({
