@@ -4,10 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 const ProjectBookingForm = () => {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +32,14 @@ const ProjectBookingForm = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to submit a project request.',
+      });
+      return navigate('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash));
+    }
+
     if (!formData.agreedToTerms) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must agree to the Terms & Conditions.' });
       return;
@@ -68,7 +80,7 @@ ${formData.detailedDescription}
 
       const res = await projectBookingApi.submit(submitData);
       if (res.success) {
-        toast({ title: 'Success', description: 'Project requested successfully!' });
+        toast({ title: 'Success', description: 'Project requested successfully! Please check your spam/junk folder for the confirmation email.' });
         setFormData({
           name: '', company: '', email: '', phone: '', productName: '',
           productCategory: 'IoT', currentStage: 'Idea', estimatedBudget: '',

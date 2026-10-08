@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { ordersApi, userApi, sessionsApi, consultationApi, workshopsApi, internshipsApi, Order, Address, SessionSlot, Workshop, InternshipApplication } from '../services/api';
+import { ordersApi, userApi, sessionsApi, consultationApi, projectBookingApi, workshopsApi, internshipsApi, Order, Address, SessionSlot, Workshop, InternshipApplication } from '../services/api';
 import { formatPrice } from '@/utils/price';
 import { normalizeIndianMobile10, isValidIndianMobile10 } from '@/utils/phone';
 import { PLACEHOLDER_IMAGE } from '@/constants/media';
@@ -201,14 +201,21 @@ const AccountPage = () => {
       setIsLoadingSessions(true);
       setIsLoadingConsultations(true);
       try {
-        const [sessionRes, consultRes] = await Promise.all([
-          sessionsApi.getStudentSessions(),
-          consultationApi.getMyConsultations()
-        ]);
-        if (!cancelled) {
-          if (sessionRes.success) setStudentSessions(sessionRes.data);
-          if (consultRes.success) setConsultations(consultRes.data);
-        }
+        const [sessionRes, consultRes, projectRes] = await Promise.all([
+            sessionsApi.getStudentSessions(),
+            consultationApi.getMyConsultations(),
+            projectBookingApi.getMyBookings().catch(() => ({ success: true, data: [] }))
+          ]);
+          if (!cancelled) {
+            if (sessionRes.success) setStudentSessions(sessionRes.data);
+            
+            const combined = [
+              ...(consultRes.success ? consultRes.data.map((c: any) => ({...c, _type: 'consultation'})) : []),
+              ...(projectRes.success ? projectRes.data.map((p: any) => ({...p, _type: 'project'})) : [])
+            ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            
+            setConsultations(combined);
+          }
       } catch (err) {
         console.error('Failed to fetch sessions/consultations:', err);
       } finally {
@@ -514,7 +521,7 @@ const AccountPage = () => {
                 >
                   <div className="flex items-center gap-3">
                     <Clock className="w-4.5 h-4.5" />
-                    <span>My Product Development</span>
+                    <span>My Projects & Consultations</span>
                   </div>
                   <ChevronRight className="w-4 h-4 opacity-60" />
                 </button>
@@ -1217,7 +1224,7 @@ const AccountPage = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-primary" />
-                    My Product Development
+                    My Projects & Consultations
                   </CardTitle>
                   <CardDescription>Track the progress of your product development projects.</CardDescription>
                 </CardHeader>
@@ -1255,30 +1262,39 @@ const AccountPage = () => {
                           </div>
                           
                           {/* Progress Tracker */}
-                          <div className="relative mt-8 mb-4 px-2">
-                            <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2 rounded-full overflow-hidden">
-                               <div 
-                                 className="h-full bg-primary transition-all duration-500 ease-in-out"
-                                 style={{ width: `${(currentStageIndex / (stages.length - 1)) * 100}%` }}
-                               />
-                            </div>
-                            <div className="relative flex justify-between">
-                              {stages.map((stage, idx) => {
-                                const isCompleted = idx <= currentStageIndex;
-                                const isActive = idx === currentStageIndex;
-                                return (
-                                  <div key={stage} className="flex flex-col items-center">
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold z-10 transition-colors duration-300 ${isCompleted ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground border-2 border-background'}`}>
-                                      {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                            {consultation._type === 'project' ? (
+                            <div className="relative mt-8 mb-4 px-2">
+                              <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2 rounded-full overflow-hidden">
+                                 <div 
+                                   className="h-full bg-primary transition-all duration-500 ease-in-out"
+                                   style={{ width: `${(currentStageIndex / (stages.length - 1)) * 100}%` }}
+                                 />
+                              </div>
+                              <div className="relative flex justify-between">
+                                {stages.map((stage, idx) => {
+                                  const isCompleted = idx <= currentStageIndex;
+                                  const isActive = idx === currentStageIndex;
+                                  return (
+                                    <div key={stage} className="flex flex-col items-center">
+                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold z-10 transition-colors duration-300 ${isCompleted ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground border-2 border-background'}`}>
+                                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                                      </div>
+                                      <span className={`text-[10px] sm:text-xs mt-2 font-medium text-center hidden sm:block w-20 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                                        {stage}
+                                      </span>
                                     </div>
-                                    <span className={`text-[10px] sm:text-xs mt-2 font-medium text-center hidden sm:block w-20 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                                      {stage}
-                                    </span>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
+                            ) : (
+                              <div className="mt-4 pt-4 border-t border-border/40">
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <Clock className="w-4 h-4" />
+                                  We will contact you shortly to schedule your 1-on-1 consultation session.
+                                </p>
+                              </div>
+                            )}
                           
                         </div>
                       )})}

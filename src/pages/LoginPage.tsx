@@ -123,7 +123,7 @@ const LoginPage: React.FC = () => {
         });
         toast({
           title: 'Account created!',
-          description: 'Please check your email to verify your account. Click the button in the email to activate.',
+          description: 'Please check your email to verify your account. (Check your spam/junk folder if not found)',
         });
         setShowResendVerify(false);
       }
@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
     setIsResending(true);
     try {
       await authApi.resendVerifyEmail(formData.email.trim());
-      toast({ title: 'Email sent', description: 'A new verification link was sent to your email.' });
+      toast({ title: 'Email sent', description: 'A new verification link was sent to your email. (Check your spam/junk folder if not found)' });
       setShowResendVerify(false);
     } catch {
       toast({ title: 'Error', description: 'Could not send verification email. Try again.', variant: 'destructive' });

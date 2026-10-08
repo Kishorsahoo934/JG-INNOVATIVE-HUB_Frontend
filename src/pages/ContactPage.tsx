@@ -88,7 +88,7 @@ const ContactPage = () => {
           }
           throw new Error(message);
         }
-        setSuccessMessage('Your message and files have been sent successfully');
+        setSuccessMessage('Your message and files have been sent successfully. Please check your spam/junk folder for our reply.');
         setForm({ firstName: '', lastName: '', email: '', subject: '', message: '' });
         setFiles([]);
         setProgress({});
