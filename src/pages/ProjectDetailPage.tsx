@@ -221,6 +221,29 @@ const ProjectDetailPage = () => {
         description={project.shortDescription}
         image={project.images[0] || BRAND_LOGO}
         path={`/project/${project._id}`}
+        ogType="product"
+        jsonLd={[
+          JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: project.name,
+            description: project.shortDescription || project.name,
+            image: project.images[0] || BRAND_LOGO,
+            sku: project.sku || project._id,
+            brand: {
+              '@type': 'Brand',
+              name: 'Innovative Hub'
+            },
+            offers: {
+              '@type': 'Offer',
+              url: `https://inovative-hub.com/project/${project._id}`,
+              priceCurrency: 'INR',
+              price: project.price,
+              itemCondition: 'https://schema.org/NewCondition',
+              availability: project.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+            }
+          })
+        ]}
       />
       <div className="network-bg min-h-screen py-6 sm:py-12">
         <div className="container mx-auto px-4 max-w-5xl">
