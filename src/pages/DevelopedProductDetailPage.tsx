@@ -99,6 +99,20 @@ const DevelopedProductDetailPage = () => {
         description={product.description}
         path={`/product-development/${product._id}`}
         image={images[0].url}
+        ogType="article"
+        jsonLd={[
+          JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            description: product.description,
+            image: images[0].url,
+            brand: {
+              '@type': 'Brand',
+              name: 'Innovative Hub'
+            }
+          })
+        ]}
       />
       
       <div className="container mx-auto px-4 py-8 lg:py-12 max-w-6xl">
