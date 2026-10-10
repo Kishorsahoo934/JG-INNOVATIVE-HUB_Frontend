@@ -1010,7 +1010,7 @@ const AccountPage = () => {
             {/* Addresses Tab */}
             <TabsContent value="addresses" className="space-y-4">
               <Card className="bg-card/60 backdrop-blur-sm border-border">
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
